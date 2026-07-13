@@ -1,7 +1,7 @@
 <meta charset="utf-8">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ScalarBreath v3 — The Exhale Engine</title>
+<title>ScalarBreath — The Exhale Engine</title>
 <style>
   /* ScalarBreath v2 — single visual world: deep plasma night (Devon canon: plasma + gold + Cinzel-adjacent serif) */
   :root{
@@ -240,6 +240,11 @@
     .quiet-btn{padding:7px 12px;font-size:.66rem}
   }
 
+  /* ---- Journeys (decoupled from setup) ---- */
+  #journeys{justify-content:flex-start;overflow-y:auto;padding-top:76px}
+  .jwrap{width:min(720px,92vw);display:flex;flex-direction:column;align-items:center}
+  .jwrap .journeys{margin-top:6px}
+
   /* ---- Nearby (find-a-calm-place) ---- */
   #nearby{justify-content:flex-start;overflow-y:auto;padding-top:76px}
   .near-wrap{width:min(430px,90vw);padding-bottom:60px}
@@ -285,7 +290,7 @@
 <section class="screen on" id="home">
   <div class="brand">The Exhale Engine</div>
   <h1>You already have oxygen.<br>Learn how to exhale better.</h1>
-  <p class="sub">Choose your orb. Choose your journey. The field does the rest.</p>
+  <p class="sub">Choose your orb. Choose your sky. Then choose your breath.</p>
   <div class="orbrow" id="orbrow">
     <button class="orbchip on" data-o="scalar"><span class="swatch sw-scalar"></span><span>Scalar Wave</span></button>
     <button class="orbchip" data-o="vortex"><span class="swatch sw-vortex"></span><span>Plasma Vortex</span></button>
@@ -306,6 +311,15 @@
     <button class="orbchip" data-g="warmgrey"><span class="swatch sg-warmgrey"></span><span>Warm Grey</span></button>
     <button class="orbchip" data-g="sunlit"><span class="swatch sg-sunlit"></span><span>Sunlit</span></button>
   </div>
+  <button class="cta" id="toJourneys" style="margin-top:24px">Choose your breath</button>
+</section>
+
+<!-- JOURNEYS -->
+<section class="screen scrolly" id="journeys">
+  <div class="jwrap">
+    <div class="brand">The Exhale Engine</div>
+    <h1 style="font-size:clamp(1.6rem,5vw,2.3rem)">Choose your breath.</h1>
+    <p class="sub">Exhale-led journeys from the Black Airbender system — pick where you are today.</p>
   <div class="journeys">
     <button class="journey" data-p="arrive"><span class="jn">Arrive</span><div class="jd">Break the unconscious pattern. Nose only — slow in, longer out.</div><div class="jm">Entry · in 4 / out 6 · ~3 min</div></button>
     <button class="journey" data-p="pressure"><span class="jn">Pressure Exhale</span><div class="jd">The flagship. Natural inhale, then a long exhale against gentle resistance — the exhale drives everything.</div><div class="jm">Pressure · in 4 / out 10 · ~4 min</div></button>
@@ -315,7 +329,9 @@
     <button class="journey" data-p="backflow"><span class="jn">Backflow<span class="jnew">New</span></span><div class="jd">The ingestion breath. One deep intake, then a long steady exhale with tiny swallows — and the field flows back into you.</div><div class="jm">Vibration · in 5 / out 10 · ~4 min</div></button>
     <button class="journey" data-p="stillpoint"><span class="jn">Stillpoint<span class="jnew">New</span></span><div class="jd">Fill, then suspend — time stops, the stars freeze, a gold ring closes. When it seals, give away the longest exhale you own.</div><div class="jm">Stillness · in 4 / hold 7 / out 8 · ~4 min</div></button>
     <button class="journey" data-p="craving"><span class="jn">The Craving Wave<span class="jnew">New</span></span><div class="jd">When the urge hits — anything you're trying not to reach for. Urges crest and pass like waves; the Ember rides this one down with you. About a minute.</div><div class="jm">Sacred Ember · in 4 / hold 2 / out 8 · ~70 sec</div></button>
-</div>
+  </div>
+    <button class="ghost" id="backToSetup" style="margin-top:18px">Back to setup</button>
+  </div>
 </section>
 
 <!-- BREATHE -->
@@ -819,13 +835,13 @@
 
   /* ---------- engine ---------- */
   const $=id=>document.getElementById(id);
-  const screens={home:$('home'),breathe:$('breathe'),interlude:$('interlude'),complete:$('complete'),codex:$('codex'),tribute:$('tribute'),nearby:$('nearby')};
+  const screens={home:$('home'),breathe:$('breathe'),interlude:$('interlude'),complete:$('complete'),codex:$('codex'),tribute:$('tribute'),nearby:$('nearby'),journeys:$('journeys')};
   function show(name){
-    pageTarget=(name==='codex'||name==='tribute'||name==='nearby')?1:0;
+    pageTarget=(name==='codex'||name==='tribute'||name==='nearby'||name==='journeys')?1:0;
     for(const k in screens)screens[k].classList.toggle('on',k===name);
     $('endBtn').style.display=(name==='breathe'||name==='interlude')?'':'none';
     document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',
-      t.dataset.t===name||(t.dataset.t==='home'&&['breathe','interlude','complete'].includes(name))));
+      t.dataset.t===name||(t.dataset.t==='home'&&['breathe','interlude','complete','journeys'].includes(name))));
   }
 
   let session=null,raf=null,pulseTimer=null,formTimer=null;
@@ -969,6 +985,8 @@
     if(g==='night')delete document.documentElement.dataset.ground; else document.documentElement.dataset.ground=g;
     document.querySelectorAll('#groundrow .orbchip').forEach(c=>c.classList.toggle('on',c.dataset.g===g));}
   document.querySelectorAll('#groundrow .orbchip').forEach(c=>c.addEventListener('click',()=>setGround(c.dataset.g)));
+  $('toJourneys').addEventListener('click',()=>show('journeys'));
+  $('backToSetup').addEventListener('click',()=>show('home'));
   document.querySelectorAll('.journey').forEach(b=>b.addEventListener('click',()=>startSession(b.dataset.p)));
   function fxReset(){FX.hold=FX.freeze=FX.temple=FX.inflow=false;FX.prog=0;FX.kind='still';}
   function teardown(){mode='idle';silence();clearInterval(pulseTimer);clearTimeout(formTimer);
