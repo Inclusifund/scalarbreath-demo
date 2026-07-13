@@ -244,6 +244,28 @@
   #journeys{justify-content:flex-start;overflow-y:auto;padding-top:76px}
   .jwrap{width:min(720px,92vw);display:flex;flex-direction:column;align-items:center}
   .jwrap .journeys{margin-top:6px}
+  /* session controls: breath count + custom builder */
+  .setctl{display:flex;flex-direction:column;align-items:center;gap:9px;margin:2px 0 20px}
+  .setlbl{font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-faint)}
+  .chips{display:flex;gap:8px}
+  .chips button{background:var(--card);border:1px solid var(--line);color:var(--ink-soft);border-radius:100px;
+    padding:8px 17px;font:inherit;font-weight:700;cursor:pointer;font-variant-numeric:tabular-nums}
+  .chips button.on{border-color:var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent)}
+  .journey.craft{border-style:dashed;text-align:center}
+  .journey.craft .jn{color:var(--gold)}
+  #builder{justify-content:flex-start;overflow-y:auto;padding-top:80px}
+  .bwrap{width:min(460px,92vw);display:flex;flex-direction:column;align-items:center;text-align:center;padding-bottom:60px}
+  .ratio{font-family:var(--serif);font-size:2.4rem;letter-spacing:.1em;color:var(--ink);margin:6px 0 4px;font-variant-numeric:tabular-nums}
+  .guide{color:var(--ink-soft);font-size:.86rem;min-height:2.7em;max-width:32ch;line-height:1.5;margin-bottom:20px}
+  .steppers{display:grid;gap:11px;width:100%;margin-bottom:22px}
+  .stp{display:grid;grid-template-columns:1fr auto auto auto auto;align-items:center;gap:10px;
+    background:var(--card);border:1px solid var(--line);border-radius:14px;padding:9px 14px}
+  .stp>span{text-align:left;font-weight:600;color:var(--ink)}
+  .stp button{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--field-bg);
+    color:var(--ink);font-size:1.25rem;line-height:1;cursor:pointer}
+  .stp button:active{transform:scale(.94)}
+  .stp b{font-family:var(--serif);font-size:1.3rem;min-width:1.7ch;font-variant-numeric:tabular-nums;color:var(--gold)}
+  .stp small{color:var(--ink-faint);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase}
 
   /* ---- Nearby (find-a-calm-place) ---- */
   #nearby{justify-content:flex-start;overflow-y:auto;padding-top:76px}
@@ -320,6 +342,12 @@
     <div class="brand">The Exhale Engine</div>
     <h1 style="font-size:clamp(1.6rem,5vw,2.3rem)">Choose your breath.</h1>
     <p class="sub">Exhale-led journeys from the Black Airbender system — pick where you are today.</p>
+    <div class="setctl">
+      <span class="setlbl">Conscious breaths</span>
+      <div class="chips" id="breathChips">
+        <button data-n="3">3</button><button data-n="5" class="on">5</button><button data-n="8">8</button><button data-n="12">12</button>
+      </div>
+    </div>
   <div class="journeys">
     <button class="journey" data-p="arrive"><span class="jn">Arrive</span><div class="jd">Break the unconscious pattern. Nose only — slow in, longer out.</div><div class="jm">Entry · in 4 / out 6 · ~3 min</div></button>
     <button class="journey" data-p="pressure"><span class="jn">Pressure Exhale</span><div class="jd">The flagship. Natural inhale, then a long exhale against gentle resistance — the exhale drives everything.</div><div class="jm">Pressure · in 4 / out 10 · ~4 min</div></button>
@@ -329,8 +357,27 @@
     <button class="journey" data-p="backflow"><span class="jn">Backflow<span class="jnew">New</span></span><div class="jd">The ingestion breath. One deep intake, then a long steady exhale with tiny swallows — and the field flows back into you.</div><div class="jm">Vibration · in 5 / out 10 · ~4 min</div></button>
     <button class="journey" data-p="stillpoint"><span class="jn">Stillpoint<span class="jnew">New</span></span><div class="jd">Fill, then suspend — time stops, the stars freeze, a gold ring closes. When it seals, give away the longest exhale you own.</div><div class="jm">Stillness · in 4 / hold 7 / out 8 · ~4 min</div></button>
     <button class="journey" data-p="craving"><span class="jn">The Craving Wave<span class="jnew">New</span></span><div class="jd">When the urge hits — anything you're trying not to reach for. Urges crest and pass like waves; the Ember rides this one down with you. About a minute.</div><div class="jm">Sacred Ember · in 4 / hold 2 / out 8 · ~70 sec</div></button>
+    <button class="journey craft" id="craftCard"><span class="jn">Craft your own</span><div class="jd">Set your own inhale, hold, exhale and empty-hold. Play with the ratio — it's your breath.</div><div class="jm">Custom · your numbers</div></button>
   </div>
     <button class="ghost" id="backToSetup" style="margin-top:18px">Back to setup</button>
+  </div>
+</section>
+
+<!-- BUILDER -->
+<section class="screen" id="builder">
+  <div class="bwrap">
+    <div class="brand">Your ratio</div>
+    <h1 style="font-size:clamp(1.5rem,5vw,2.1rem)">Craft your breath.</h1>
+    <div class="ratio" id="ratioBig">4 · 2 · 8 · 0</div>
+    <div class="guide" id="ratioGuide"></div>
+    <div class="steppers">
+      <div class="stp"><span>Inhale</span><button data-k="in" data-d="-1">–</button><b id="v-in">4</b><button data-k="in" data-d="1">+</button><small>sec</small></div>
+      <div class="stp"><span>Hold full</span><button data-k="hold" data-d="-1">–</button><b id="v-hold">2</b><button data-k="hold" data-d="1">+</button><small>sec</small></div>
+      <div class="stp"><span>Exhale</span><button data-k="out" data-d="-1">–</button><b id="v-out">8</b><button data-k="out" data-d="1">+</button><small>sec</small></div>
+      <div class="stp"><span>Hold empty</span><button data-k="hold2" data-d="-1">–</button><b id="v-hold2">0</b><button data-k="hold2" data-d="1">+</button><small>sec</small></div>
+    </div>
+    <button class="cta" id="builderBegin">Begin</button>
+    <button class="ghost" id="builderBack" style="margin-top:14px">Back</button>
   </div>
 </section>
 
@@ -835,27 +882,28 @@
 
   /* ---------- engine ---------- */
   const $=id=>document.getElementById(id);
-  const screens={home:$('home'),breathe:$('breathe'),interlude:$('interlude'),complete:$('complete'),codex:$('codex'),tribute:$('tribute'),nearby:$('nearby'),journeys:$('journeys')};
+  const screens={home:$('home'),breathe:$('breathe'),interlude:$('interlude'),complete:$('complete'),codex:$('codex'),tribute:$('tribute'),nearby:$('nearby'),journeys:$('journeys'),builder:$('builder')};
   function show(name){
-    pageTarget=(name==='codex'||name==='tribute'||name==='nearby'||name==='journeys')?1:0;
+    pageTarget=(name==='codex'||name==='tribute'||name==='nearby'||name==='journeys'||name==='builder')?1:0;
     for(const k in screens)screens[k].classList.toggle('on',k===name);
     $('endBtn').style.display=(name==='breathe'||name==='interlude')?'':'none';
     document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',
-      t.dataset.t===name||(t.dataset.t==='home'&&['breathe','interlude','complete','journeys'].includes(name))));
+      t.dataset.t===name||(t.dataset.t==='home'&&['breathe','interlude','complete','journeys','builder'].includes(name))));
   }
 
-  let session=null,raf=null,pulseTimer=null,formTimer=null;
-  const JNAMES={arrive:'Arrive',pressure:'Pressure Exhale',pulse:'Pulse',spiral:'Spiral',temple:'Temple',backflow:'Backflow',stillpoint:'Stillpoint',craving:'The Craving Wave'};
-  function startSession(key){
+  let session=null,raf=null,pulseTimer=null,formTimer=null,breathCount=5;
+  const JNAMES={arrive:'Arrive',pressure:'Pressure Exhale',pulse:'Pulse',spiral:'Spiral',temple:'Temple',backflow:'Backflow',stillpoint:'Stillpoint',craving:'The Craving Wave',custom:'Free Breath'};
+  function startSession(key,customP){
     audioInit();if(AC.state==='suspended')AC.resume();
     if(key==='spiral'&&orbKey==='scalar')setOrb('vortex'); // spiral journey pairs with the vortex by default
     if(key==='craving')setOrb('ember');                    // the Craving Wave IS Sacred Ember (locked w/ Devon 2026-05-21)
-    session={p:PATTERNS[key],key,taps:[],round:0,cycle:0,phase:0,breaths:0,started:Date.now()};
+    const p={...(customP||PATTERNS[key]),rounds:1,cycles:breathCount}; // user chooses how many conscious breaths
+    session={p,key,taps:[],round:0,cycle:0,phase:0,breaths:0,started:Date.now()};
     buildDots();show('breathe');
     // arrival is part of the practice: the orb assembles from scatter before the first instruction
     mode='form';formP=0;breathVal=.25;
     $('phaseWord').style.opacity=1;$('phaseHint').style.opacity=1;
-    $('phaseWord').textContent=JNAMES[key]||'';
+    $('phaseWord').textContent=JNAMES[key]||'Free Breath';
     $('phaseHint').textContent=FORM_LINES[Math.floor(Math.random()*FORM_LINES.length)];
     droneTo(.04,118,2.5);
     clearTimeout(formTimer);
@@ -987,7 +1035,38 @@
   document.querySelectorAll('#groundrow .orbchip').forEach(c=>c.addEventListener('click',()=>setGround(c.dataset.g)));
   $('toJourneys').addEventListener('click',()=>show('journeys'));
   $('backToSetup').addEventListener('click',()=>show('home'));
-  document.querySelectorAll('.journey').forEach(b=>b.addEventListener('click',()=>startSession(b.dataset.p)));
+  // breath count
+  document.querySelectorAll('#breathChips button').forEach(b=>b.addEventListener('click',()=>{
+    breathCount=+b.dataset.n;
+    document.querySelectorAll('#breathChips button').forEach(x=>x.classList.toggle('on',x===b));}));
+  // custom ratio builder
+  const custom={in:4,hold:2,out:8,hold2:0};
+  const LIM={in:[2,12],hold:[0,15],out:[2,15],hold2:[0,10]};
+  function guideText(c){
+    let g;
+    if(c.out>=c.in+2)g='A longer exhale than inhale — many find it calming and grounding.';
+    else if(Math.abs(c.out-c.in)<=1)g='Even in and out — a balanced, steadying rhythm.';
+    else g='A longer inhale — tends to feel energising and awakening.';
+    if(c.hold>=4||c.hold2>=4)g+=' Longer holds build breath-hold comfort over time.';
+    return g;
+  }
+  function refreshBuilder(){
+    for(const k in custom)$('v-'+k).textContent=custom[k];
+    $('ratioBig').textContent=`${custom.in} · ${custom.hold} · ${custom.out} · ${custom.hold2}`;
+    $('ratioGuide').textContent=guideText(custom);
+  }
+  document.querySelectorAll('.stp button').forEach(b=>b.addEventListener('click',()=>{
+    const k=b.dataset.k,d=+b.dataset.d,lim=LIM[k];
+    custom[k]=Math.max(lim[0],Math.min(lim[1],custom[k]+d));refreshBuilder();}));
+  $('craftCard').addEventListener('click',()=>{refreshBuilder();show('builder');});
+  $('builderBack').addEventListener('click',()=>show('journeys'));
+  $('builderBegin').addEventListener('click',()=>{
+    const ph=[{w:'Breathe in',h:'Fill gently — no strain',t:custom.in,from:0,to:1}];
+    if(custom.hold>0)ph.push({w:'Hold',h:'Stay full, soft',t:custom.hold,from:1,to:1,hold:true});
+    ph.push({w:'Breathe out',h:'Slow, complete release',t:custom.out,from:1,to:0});
+    if(custom.hold2>0)ph.push({w:'Hold empty',h:'Rest in the pause',t:custom.hold2,from:0,to:0,hold:true});
+    startSession('custom',{phases:ph});});
+  document.querySelectorAll('.journey[data-p]').forEach(b=>b.addEventListener('click',()=>startSession(b.dataset.p)));
   function fxReset(){FX.hold=FX.freeze=FX.temple=FX.inflow=false;FX.prog=0;FX.kind='still';}
   function teardown(){mode='idle';silence();clearInterval(pulseTimer);clearTimeout(formTimer);
     cancelAnimationFrame(raf);breathVal=0;dissP=0;formP=1;DRIPS.length=0;fxReset();}
