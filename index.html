@@ -1,0 +1,1049 @@
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScalarBreath v3 — The Exhale Engine</title>
+<style>
+  /* ScalarBreath v2 — single visual world: deep plasma night (Devon canon: plasma + gold + Cinzel-adjacent serif) */
+  :root{
+    /* base = Night (deep plasma). Grounds below re-token for day/grey/yellow. */
+    --void:#070310; --void-2:#0E0820; --ink:#F2ECFF; --ink-soft:#B4A8D6; --ink-faint:#6E6294;
+    --plasma:#8B5CF6; --teal:#2DD4BF; --gold:#E4B85C; --ember:#F97316;
+    --card:rgba(20,12,42,.55); --card-strong:rgba(14,8,32,.72); --card-soft:rgba(14,8,32,.6);
+    --nav-fade:rgba(7,3,16,.85); --field-bg:rgba(7,3,16,.7);
+    --line:rgba(139,92,246,.22); --line-gold:rgba(228,184,92,.35);
+    --h1-a:#F2ECFF; --h1-b:#C9B8F5; --h1-c:#8B5CF6;
+    --serif:"Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --sans:"Avenir Next",Avenir,"Helvetica Neue",system-ui,sans-serif;
+  }
+  :root[data-ground="dusk"]{
+    --void:#1b1526; --void-2:#120e1c; --ink:#ECE6F5; --ink-soft:#B3A6CE; --ink-faint:#7d7099;
+    --card:rgba(40,30,64,.5); --card-strong:rgba(28,20,46,.7); --card-soft:rgba(28,20,46,.55);
+    --nav-fade:rgba(18,14,28,.85); --field-bg:rgba(18,14,28,.7);
+    --line:rgba(160,120,240,.24); --line-gold:rgba(228,184,92,.32);
+    --h1-a:#F2ECFF; --h1-b:#CDBEF2; --h1-c:#9B7BE0;
+  }
+  :root[data-ground="slate"]{
+    --void:#2b3036; --void-2:#22262b; --ink:#EEF2F5; --ink-soft:#AEB8C0; --ink-faint:#7c868f;
+    --card:rgba(255,255,255,.06); --card-strong:rgba(255,255,255,.1); --card-soft:rgba(255,255,255,.05);
+    --nav-fade:rgba(34,38,43,.85); --field-bg:rgba(20,24,28,.6);
+    --line:rgba(180,205,225,.16); --line-gold:rgba(228,184,92,.34);
+    --h1-a:#FFFFFF; --h1-b:#CBD6DE; --h1-c:#9BB0BE; --teal:#4FD8C6; --gold:#EAC06A;
+  }
+  :root[data-ground="beige"]{
+    --void:#efe7d6; --void-2:#e4d8c0; --ink:#2b2620; --ink-soft:#6b6154; --ink-faint:#9a8f7e;
+    --card:rgba(255,252,245,.66); --card-strong:rgba(255,252,245,.82); --card-soft:rgba(255,251,242,.62);
+    --nav-fade:rgba(239,231,214,.9); --field-bg:rgba(255,255,255,.72);
+    --line:rgba(120,90,40,.2); --line-gold:rgba(160,120,40,.42);
+    --h1-a:#2a2438; --h1-b:#6a4fae; --h1-c:#8B5CF6; --gold:#9c6f1f; --teal:#0e7c72;
+  }
+  :root[data-ground="warmgrey"]{
+    --void:#e0dad0; --void-2:#d2cbc0; --ink:#302c26; --ink-soft:#645d53; --ink-faint:#928a7d;
+    --card:rgba(255,254,250,.62); --card-strong:rgba(255,254,250,.8); --card-soft:rgba(252,250,245,.58);
+    --nav-fade:rgba(224,218,208,.9); --field-bg:rgba(255,255,255,.7);
+    --line:rgba(90,80,60,.2); --line-gold:rgba(150,115,45,.42);
+    --h1-a:#2a2635; --h1-b:#6a4fae; --h1-c:#8B5CF6; --gold:#8f6a24; --teal:#137066;
+  }
+  :root[data-ground="sunlit"]{
+    --void:#f6efc9; --void-2:#efe6b4; --ink:#3a3320; --ink-soft:#6e6440; --ink-faint:#9a8e5e;
+    --card:rgba(255,252,235,.66); --card-strong:rgba(255,252,235,.84); --card-soft:rgba(255,251,230,.62);
+    --nav-fade:rgba(246,239,201,.9); --field-bg:rgba(255,255,245,.72);
+    --line:rgba(140,110,30,.22); --line-gold:rgba(150,115,30,.46);
+    --h1-a:#33301a; --h1-b:#8a6a2a; --h1-c:#b8862f; --gold:#8a6410; --teal:#137066;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{margin:0;background:var(--void);color:var(--ink);font-family:var(--sans);overflow:hidden}
+  canvas#field{position:fixed;inset:0;width:100vw;height:100vh;display:block}
+
+  .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:28px 22px 60px;text-align:center;opacity:0;pointer-events:none;transition:opacity .8s ease}
+  .screen.on{opacity:1;pointer-events:auto}
+  .scrolly{justify-content:flex-start;overflow-y:auto;padding-top:70px}
+
+  .brand{font-family:var(--serif);letter-spacing:.34em;text-transform:uppercase;font-size:13px;color:var(--gold);
+    text-shadow:0 0 24px rgba(228,184,92,.35)}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(1.9rem,6.6vw,3.2rem);letter-spacing:.02em;
+    margin:.35em 0 .2em;line-height:1.1;text-wrap:balance;
+    background:linear-gradient(120deg,var(--h1-a) 20%,var(--h1-b) 55%,var(--h1-c) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--ink-soft);font-size:1rem;max-width:36ch;margin:0 auto 22px;line-height:1.55}
+
+  /* nav */
+  .nav{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;
+    padding:14px 18px;z-index:8;background:linear-gradient(var(--nav-fade),transparent)}
+  .nav .brand{font-size:11px}
+  .tabs{display:flex;gap:6px}
+  .tab{background:none;border:1px solid transparent;color:var(--ink-faint);border-radius:100px;
+    padding:7px 14px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;font-family:var(--sans)}
+  .tab.on{color:var(--gold);border-color:var(--line-gold)}
+  .tab:hover{color:var(--ink)}
+
+  /* orb picker */
+  .orbrow{display:flex;gap:14px;margin:4px 0 16px;overflow-x:auto;scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;padding:2px 18px 8px;scrollbar-width:none;
+    -webkit-mask:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent);
+            mask:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent)}
+  .orbrow::-webkit-scrollbar{display:none}
+  @media (min-width:720px){.orbrow{justify-content:center;flex-wrap:wrap;-webkit-mask:none;mask:none}}
+  .orbchip{display:flex;flex-direction:column;align-items:center;gap:7px;background:none;border:none;cursor:pointer;
+    padding:6px 2px;flex:0 0 auto;scroll-snap-align:center}
+  .orbchip .swatch{width:46px;height:46px;border-radius:50%;border:2px solid rgba(140,140,140,.22);transition:box-shadow .3s,border-color .3s}
+  .orbchip span{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+  .orbchip.on .swatch{border-color:var(--gold)}
+  .orbchip.on span{color:var(--gold)}
+  .sw-scalar{background:radial-gradient(circle at 35% 30%,#F2ECFF,#8B5CF6 60%,#31146E);box-shadow:0 0 18px rgba(139,92,246,.6)}
+  .sw-vortex{background:conic-gradient(from 40deg,#8B5CF6,#2DD4BF,#8B5CF6);box-shadow:0 0 18px rgba(45,212,191,.5)}
+  .sw-ember{background:radial-gradient(circle at 35% 30%,#FFE9C4,#F97316 55%,#7C2D12);box-shadow:0 0 18px rgba(249,115,22,.55)}
+  .sw-aurora{background:linear-gradient(160deg,#2DD4BF 10%,#8B5CF6 60%,#0E4F46);box-shadow:0 0 18px rgba(45,212,191,.6)}
+  .sw-water{background:radial-gradient(circle at 35% 30%,#e0faff,#1f7f9e 60%,#083242);box-shadow:0 0 18px rgba(84,189,210,.6)}
+  .sw-forest{background:radial-gradient(circle at 35% 30%,#ecffe1,#2c6b3d 60%,#0a2814);box-shadow:0 0 18px rgba(79,154,92,.55)}
+  .sw-coast{background:radial-gradient(circle at 35% 30%,#e8fffa,#1f9c94 60%,#063732);box-shadow:0 0 18px rgba(95,211,198,.6)}
+  .sw-meadow{background:radial-gradient(circle at 35% 30%,#f5ffdc,#6fb43f 60%,#1e320a);box-shadow:0 0 18px rgba(167,217,106,.55)}
+  .sw-ridge{background:radial-gradient(circle at 35% 30%,#fff0d6,#d85a7f 55%,#501428);box-shadow:0 0 18px rgba(255,158,124,.55)}
+  /* background/ground picker */
+  .groundlabel{font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-faint);margin:2px 0 8px}
+  .groundrow .swatch{border:1px solid rgba(150,150,150,.3)}
+  .sg-night{background:linear-gradient(135deg,#1a1030,#070310)}
+  .sg-dusk{background:linear-gradient(135deg,#2a2340,#120e1c)}
+  .sg-slate{background:linear-gradient(135deg,#3a4048,#22262b)}
+  .sg-beige{background:linear-gradient(135deg,#f3ecdd,#e4d8c0)}
+  .sg-warmgrey{background:linear-gradient(135deg,#e9e3d9,#d2cbc0)}
+  .sg-sunlit{background:linear-gradient(135deg,#f8f1cf,#efe6b4)}
+
+  #home,#complete{justify-content:flex-start;overflow-y:auto;padding-top:76px}
+  .journeys{display:flex;flex-direction:column;gap:11px;width:min(360px,88vw);padding-bottom:30px}
+  @media (min-width:700px){.journeys{display:grid;grid-template-columns:1fr 1fr;width:min(720px,90vw)}}
+  .jnew{font-size:.58rem;letter-spacing:.2em;color:var(--teal);border:1px solid rgba(45,212,191,.4);
+    border-radius:100px;padding:2px 8px;vertical-align:2px;margin-left:8px}
+  .journey{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 18px;
+    color:var(--ink);cursor:pointer;text-align:left;backdrop-filter:blur(8px);
+    transition:border-color .25s,transform .25s,box-shadow .25s;font-family:var(--sans)}
+  .journey:hover,.journey:focus-visible{border-color:var(--plasma);transform:translateY(-2px);
+    box-shadow:0 0 0 1px rgba(139,92,246,.35),0 10px 40px rgba(139,92,246,.22)}
+  .journey .jn{font-family:var(--serif);font-size:1.12rem;letter-spacing:.04em}
+  .journey .jd{font-size:.8rem;color:var(--ink-soft);margin-top:3px;line-height:1.45}
+  .journey .jm{font-family:var(--serif);font-size:.7rem;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-top:7px}
+
+  /* breathe */
+  #breathe{justify-content:space-between;padding:64px 22px 40px}
+  .phase-word{font-family:var(--serif);font-size:clamp(1.6rem,5.6vw,2.4rem);letter-spacing:.22em;text-transform:uppercase;
+    color:var(--ink);text-shadow:0 0 34px rgba(139,92,246,.55);min-height:1.3em;transition:opacity .3s ease}
+  .phase-hint{font-size:.82rem;color:var(--ink-soft);min-height:1.5em;max-width:30ch;margin:6px auto 0;transition:opacity .3s ease}
+  .session-meta{display:flex;gap:10px;align-items:center;justify-content:center}
+  .dot{width:7px;height:7px;border-radius:50%;background:rgba(139,92,246,.25);transition:background .4s,box-shadow .4s}
+  .dot.done{background:var(--gold);box-shadow:0 0 10px rgba(228,184,92,.7)}
+  .dot.now{background:var(--plasma);box-shadow:0 0 12px rgba(139,92,246,.9)}
+  .quiet-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);border-radius:100px;
+    padding:8px 16px;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:var(--sans)}
+  .quiet-btn:hover{border-color:var(--plasma);color:var(--ink)}
+
+  /* interlude */
+  .interlude-card{background:var(--card-strong);border:1px solid var(--line);border-radius:22px;
+    padding:34px 28px;max-width:min(430px,88vw);backdrop-filter:blur(14px);box-shadow:0 0 80px rgba(139,92,246,.14)}
+  .interlude-eyebrow{font-family:var(--serif);font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--teal);margin-bottom:14px}
+  .interlude-q{font-family:var(--serif);font-size:clamp(1.25rem,4.4vw,1.6rem);line-height:1.4;text-wrap:balance}
+  .interlude-hint{font-size:.78rem;color:var(--ink-faint);margin-top:18px}
+
+  .cta{font-family:var(--serif);letter-spacing:.22em;text-transform:uppercase;font-size:.9rem;
+    background:linear-gradient(120deg,var(--gold) 0%,#F0D08A 50%,var(--gold) 100%);color:#1D1204;
+    border:none;border-radius:100px;padding:15px 36px;cursor:pointer;margin-top:26px;
+    box-shadow:0 0 30px rgba(228,184,92,.35),inset 0 1px 0 rgba(255,255,255,.5);transition:transform .25s,box-shadow .25s}
+  .cta:hover{transform:translateY(-2px);box-shadow:0 0 46px rgba(228,184,92,.55),inset 0 1px 0 rgba(255,255,255,.5)}
+  .ghost{background:none;border:1px solid var(--line);color:var(--ink-soft);border-radius:100px;
+    padding:12px 28px;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;margin-top:14px;font-family:var(--sans)}
+  .ghost:hover{border-color:var(--plasma);color:var(--ink)}
+
+  /* fingerprint */
+  .fp-card{margin-top:22px;background:var(--card-strong);border:1px solid var(--line);border-radius:22px;
+    padding:20px 22px 18px;max-width:min(430px,90vw);backdrop-filter:blur(14px);text-align:center}
+  .fp-card canvas{width:min(240px,60vw);height:auto;display:block;margin:6px auto 10px}
+  .fp-card .fe{font-family:var(--serif);font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--teal)}
+  .fp-card p{font-size:.8rem;color:var(--ink-soft);margin:4px 0 12px;line-height:1.5}
+  .fp-row{display:flex;gap:8px;justify-content:center}
+  .fp-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);border-radius:100px;
+    padding:9px 18px;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:var(--sans);text-decoration:none}
+  .fp-btn:hover{border-color:var(--teal);color:var(--ink)}
+  .fp-btn.gold{border-color:var(--line-gold);color:var(--gold)}
+
+  /* complete/offer */
+  .stats{display:flex;gap:32px;justify-content:center;margin:22px 0 6px}
+  .stat .sv{font-family:var(--serif);font-size:1.9rem;color:var(--gold);font-variant-numeric:tabular-nums}
+  .stat .sl{font-size:.66rem;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-faint);margin-top:2px}
+  .offer{margin-top:24px;background:var(--card-strong);border:1px solid var(--line-gold);border-radius:22px;
+    padding:24px;max-width:min(430px,90vw);backdrop-filter:blur(14px)}
+  .offer .oe{font-family:var(--serif);font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+  .offer h3{font-family:var(--serif);font-weight:400;font-size:1.4rem;margin:.4em 0 .3em}
+  .offer p{font-size:.86rem;color:var(--ink-soft);margin:0 0 14px;line-height:1.5}
+  .ladder{display:flex;gap:8px;margin-bottom:16px}
+  .rung{flex:1;border:1px solid var(--line);border-radius:10px;padding:8px 4px;font-size:.7rem;color:var(--ink-faint)}
+  .rung b{display:block;font-family:var(--serif);font-size:1rem;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  .rung.now{border-color:var(--gold);background:rgba(228,184,92,.08)}
+  .rung.now b{color:var(--gold)}
+  .waitrow{display:flex;gap:8px}
+  .waitrow input{flex:1;background:var(--field-bg);border:1px solid var(--line);border-radius:100px;
+    color:var(--ink);padding:12px 18px;font-size:.9rem;font-family:var(--sans);min-width:0}
+  .waitrow button{background:var(--plasma);color:#fff;border:none;border-radius:100px;padding:0 20px;
+    font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;font-family:var(--sans)}
+  .draft{font-size:.64rem;color:var(--ink-faint);margin-top:10px}
+
+  /* codex + tribute panels */
+  .panel{width:min(680px,92vw);margin:0 auto;text-align:left;padding-bottom:80px}
+  .panel .lead{color:var(--ink-soft);font-size:.95rem;line-height:1.6;max-width:56ch}
+  .era{margin-top:34px}
+  .era-tag{font-family:var(--serif);font-size:.7rem;letter-spacing:.32em;text-transform:uppercase;margin-bottom:4px}
+  .era h2{font-family:var(--serif);font-weight:400;font-size:1.6rem;margin:.1em 0 .35em;letter-spacing:.02em}
+  .era .blurb{color:var(--ink-soft);font-size:.88rem;line-height:1.55;max-width:58ch;margin:0 0 16px}
+  .epis{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  .ep{background:var(--card-soft);border:1px solid var(--line);border-radius:15px;padding:15px 16px;backdrop-filter:blur(8px)}
+  .ep .en{font-family:var(--serif);font-size:1rem;line-height:1.35}
+  .ep .ed{font-size:.78rem;color:var(--ink-soft);margin-top:6px;line-height:1.5}
+  .ep .em{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-top:10px;
+    border-top:1px dashed var(--line);padding-top:8px}
+  .ep .em b{color:var(--teal);font-weight:600}
+  .phases{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px}
+  .ph{font-family:var(--serif);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);
+    border:1px solid var(--line);border-radius:100px;padding:6px 12px}
+  .ph b{color:var(--gold);font-weight:400}
+  .tech{border-left:2px solid var(--plasma);padding:2px 0 2px 14px;margin-bottom:14px}
+  .tech .tn{font-family:var(--serif);font-size:1.02rem}
+  .tech .tx{font-size:.8rem;color:var(--ink-soft);line-height:1.55;margin-top:3px}
+  .tech .tx b{color:var(--teal);font-weight:600}
+  .scitab{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:6px}
+  .scitab td{border-top:1px solid var(--line);padding:9px 10px 9px 0;color:var(--ink-soft);vertical-align:top;line-height:1.45}
+  .scitab td:first-child{color:var(--ink);font-family:var(--serif);white-space:nowrap;padding-right:16px}
+
+  /* tribute */
+  .anchor{margin:30px auto;max-width:56ch;text-align:center}
+  .anchor blockquote{font-family:var(--serif);font-size:clamp(1.2rem,4vw,1.55rem);line-height:1.6;margin:0;
+    color:var(--ink);text-wrap:balance}
+  .anchor blockquote em{color:var(--gold);font-style:normal;text-shadow:0 0 26px rgba(228,184,92,.4)}
+  .anchor cite{display:block;font-family:var(--serif);font-style:normal;font-size:.74rem;letter-spacing:.3em;
+    text-transform:uppercase;color:var(--gold);margin-top:18px}
+  .lineage{list-style:none;padding:0;margin:26px auto 0;max-width:52ch;text-align:center}
+  .lineage li{padding:13px 0;border-bottom:1px solid var(--line);color:var(--ink-soft);font-size:.9rem;line-height:1.5}
+  .lineage li b{color:var(--ink);font-family:var(--serif);font-weight:400;display:block;font-size:1.02rem;letter-spacing:.03em}
+  .lineage li:last-child{border-bottom:none}
+  .lineage li.devon b{color:var(--gold)}
+
+  .safety{position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:.64rem;color:var(--ink-faint);
+    padding:9px;z-index:9;background:linear-gradient(transparent,var(--nav-fade) 40%)}
+  :focus-visible{outline:2px solid var(--teal);outline-offset:3px;border-radius:6px}
+  @media (prefers-reduced-motion:reduce){.cta,.journey{transition:none}}
+
+  /* mobile nav: let tabs breathe / scroll, shrink chrome */
+  @media (max-width:560px){
+    .nav{padding:12px 12px}
+    .nav .brand{display:none}
+    .tabs{gap:3px;overflow-x:auto;scrollbar-width:none;max-width:64vw}
+    .tabs::-webkit-scrollbar{display:none}
+    .tab{padding:7px 11px;font-size:.66rem;letter-spacing:.1em;flex:0 0 auto}
+    .quiet-btn{padding:7px 12px;font-size:.66rem}
+  }
+
+  /* ---- Nearby (find-a-calm-place) ---- */
+  #nearby{justify-content:flex-start;overflow-y:auto;padding-top:76px}
+  .near-wrap{width:min(430px,90vw);padding-bottom:60px}
+  .near-hint{color:var(--ink-soft);font-size:.92rem;line-height:1.55;max-width:34ch;margin:0 auto 20px}
+  .near-btn{font-family:var(--serif);letter-spacing:.16em;text-transform:uppercase;font-size:.86rem;
+    background:linear-gradient(120deg,var(--gold) 0%,#F0D08A 50%,var(--gold) 100%);color:#1D1204;border:none;
+    border-radius:100px;padding:15px 30px;cursor:pointer;box-shadow:0 0 30px rgba(228,184,92,.3);width:100%;max-width:320px}
+  .near-btn:disabled{filter:grayscale(.4) opacity(.7);cursor:progress}
+  .near-status{min-height:1.4em;color:var(--ink-soft);font-size:.86rem;margin:14px 0}
+  .suggest{background:var(--card-strong);border:1px solid var(--line-gold);border-radius:18px;padding:16px 18px;margin:6px 0 18px;
+    display:none;text-align:left}
+  .suggest .se{font-family:var(--serif);font-size:.66rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
+  .suggest .st{font-family:var(--serif);font-size:1.15rem;margin:5px 0 12px;color:var(--ink);line-height:1.35}
+  .suggest button{font-family:var(--sans);letter-spacing:.14em;text-transform:uppercase;font-size:.74rem;
+    background:var(--plasma);color:#fff;border:none;border-radius:100px;padding:11px 20px;cursor:pointer}
+  .nspots{list-style:none;padding:0;margin:0;display:grid;gap:10px;text-align:left}
+  .nspot{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 15px;
+    display:flex;align-items:center;gap:12px;color:var(--ink)}
+  .nspot .nn{flex:1;min-width:0}
+  .nspot .nn b{font-family:var(--serif);font-weight:400;font-size:1.02rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nspot .nn span{font-size:.76rem;color:var(--ink-faint)}
+  .nspot .nw{font-family:var(--serif);color:var(--gold);font-variant-numeric:tabular-nums;text-align:right;font-size:1rem}
+  .nspot .nw small{display:block;font-family:var(--sans);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+</style>
+
+<canvas id="field"></canvas>
+
+<div class="nav">
+  <span class="brand">ScalarBreath</span>
+  <div class="tabs">
+    <button class="tab on" data-t="home">Breathe</button>
+    <button class="tab" data-t="nearby">Nearby</button>
+    <button class="tab" data-t="codex">Codex</button>
+    <button class="tab" data-t="tribute">Tribute</button>
+</div>
+  <div style="display:flex;gap:6px">
+    <button class="quiet-btn" id="soundBtn" aria-pressed="true">Sound</button>
+    <button class="quiet-btn" id="endBtn" style="display:none">End</button>
+</div>
+</div>
+
+<!-- HOME -->
+<section class="screen on" id="home">
+  <div class="brand">The Exhale Engine</div>
+  <h1>You already have oxygen.<br>Learn how to exhale better.</h1>
+  <p class="sub">Choose your orb. Choose your journey. The field does the rest.</p>
+  <div class="orbrow" id="orbrow">
+    <button class="orbchip on" data-o="scalar"><span class="swatch sw-scalar"></span><span>Scalar Wave</span></button>
+    <button class="orbchip" data-o="vortex"><span class="swatch sw-vortex"></span><span>Plasma Vortex</span></button>
+    <button class="orbchip" data-o="ember"><span class="swatch sw-ember"></span><span>Sacred Ember</span></button>
+    <button class="orbchip" data-o="aurora"><span class="swatch sw-aurora"></span><span>Aurora</span></button>
+    <button class="orbchip" data-o="water"><span class="swatch sw-water"></span><span>Lakeside</span></button>
+    <button class="orbchip" data-o="forest"><span class="swatch sw-forest"></span><span>Woodland</span></button>
+    <button class="orbchip" data-o="coast"><span class="swatch sw-coast"></span><span>Coast</span></button>
+    <button class="orbchip" data-o="meadow"><span class="swatch sw-meadow"></span><span>Meadow</span></button>
+    <button class="orbchip" data-o="ridge"><span class="swatch sw-ridge"></span><span>Ridge</span></button>
+  </div>
+  <div class="groundlabel">Background</div>
+  <div class="orbrow groundrow" id="groundrow">
+    <button class="orbchip on" data-g="night"><span class="swatch sg-night"></span><span>Night</span></button>
+    <button class="orbchip" data-g="dusk"><span class="swatch sg-dusk"></span><span>Dusk</span></button>
+    <button class="orbchip" data-g="slate"><span class="swatch sg-slate"></span><span>Slate</span></button>
+    <button class="orbchip" data-g="beige"><span class="swatch sg-beige"></span><span>Beige</span></button>
+    <button class="orbchip" data-g="warmgrey"><span class="swatch sg-warmgrey"></span><span>Warm Grey</span></button>
+    <button class="orbchip" data-g="sunlit"><span class="swatch sg-sunlit"></span><span>Sunlit</span></button>
+  </div>
+  <div class="journeys">
+    <button class="journey" data-p="arrive"><span class="jn">Arrive</span><div class="jd">Break the unconscious pattern. Nose only — slow in, longer out.</div><div class="jm">Entry · in 4 / out 6 · ~3 min</div></button>
+    <button class="journey" data-p="pressure"><span class="jn">Pressure Exhale</span><div class="jd">The flagship. Natural inhale, then a long exhale against gentle resistance — the exhale drives everything.</div><div class="jm">Pressure · in 4 / out 10 · ~4 min</div></button>
+    <button class="journey" data-p="pulse"><span class="jn">Pulse</span><div class="jd">Rhythm over count. Smooth inhale, exhale released in soft pulses — feel the field flicker with you.</div><div class="jm">Rhythm · in 4 / pulse out 8 · ~4 min</div></button>
+    <button class="journey" data-p="spiral"><span class="jn">Spiral</span><div class="jd">Inhale is stillness. Exhale is motion — turn gently clockwise as you release.</div><div class="jm">Movement · in 4 / out 6 moving · ~3 min</div></button>
+    <button class="journey" data-p="temple"><span class="jn">Temple<span class="jnew">New</span></span><div class="jd">Warm your hands, rest them on your temples. Watch the warmth arrive at the orb's sides — then draw it inward on one long, emptying exhale.</div><div class="jm">Release · in 4 / hold 4 / out 8 · ~4 min</div></button>
+    <button class="journey" data-p="backflow"><span class="jn">Backflow<span class="jnew">New</span></span><div class="jd">The ingestion breath. One deep intake, then a long steady exhale with tiny swallows — and the field flows back into you.</div><div class="jm">Vibration · in 5 / out 10 · ~4 min</div></button>
+    <button class="journey" data-p="stillpoint"><span class="jn">Stillpoint<span class="jnew">New</span></span><div class="jd">Fill, then suspend — time stops, the stars freeze, a gold ring closes. When it seals, give away the longest exhale you own.</div><div class="jm">Stillness · in 4 / hold 7 / out 8 · ~4 min</div></button>
+    <button class="journey" data-p="craving"><span class="jn">The Craving Wave<span class="jnew">New</span></span><div class="jd">When the urge hits — anything you're trying not to reach for. Urges crest and pass like waves; the Ember rides this one down with you. About a minute.</div><div class="jm">Sacred Ember · in 4 / hold 2 / out 8 · ~70 sec</div></button>
+</div>
+</section>
+
+<!-- BREATHE -->
+<section class="screen" id="breathe">
+  <div style="height:30px"></div>
+  <div>
+    <div class="phase-word" id="phaseWord">Ready</div>
+    <div class="phase-hint" id="phaseHint"></div>
+</div>
+  <div class="session-meta" id="cycleDots"></div>
+</section>
+
+<!-- INTERLUDE -->
+<section class="screen" id="interlude">
+  <div class="interlude-card">
+    <div class="interlude-eyebrow">While the field settles…</div>
+    <div class="interlude-q" id="interludeQ"></div>
+    <div class="interlude-hint">No need to answer out loud. Tap anywhere when it's landed.</div>
+</div>
+</section>
+
+<!-- COMPLETE -->
+<section class="screen" id="complete">
+  <div class="brand">Well breathed</div>
+  <h1 style="font-size:clamp(1.6rem,5vw,2.3rem)">Control over pressure is<br>control over state.</h1>
+  <div class="stats">
+    <div class="stat"><div class="sv" id="statBreaths">0</div><div class="sl">Exhales</div></div>
+    <div class="stat"><div class="sv" id="statMins">0</div><div class="sl">Minutes</div></div>
+    <div class="stat"><div class="sv">1</div><div class="sl">Promise kept</div></div>
+</div>
+  <div class="fp-card">
+    <div class="fe">Your breath left a mark</div>
+    <canvas id="fpCanvas" width="520" height="520"></canvas>
+    <p id="fpCaption">No two sessions draw the same fingerprint — this one is yours alone.</p>
+    <div class="fp-row">
+      <a class="fp-btn" id="fpSave" download="scalarbreath-fingerprint.png">Save it</a>
+      <span class="fp-btn gold" title="Phase 5 — Devon already makes these by hand">Framed print · coming</span>
+</div>
+</div>
+  <div class="offer">
+    <div class="oe">Lifetime · Never a Subscription</div>
+    <h3>Own it once. Breathe forever.</h3>
+    <p>ScalarBreath stays free to open and breathe — lifetime unlocks every orb, every journey, the full Codex, and all future updates. No renewals, no drip-billing, ever.</p>
+    <div class="ladder">
+      <div class="rung now"><b>$97</b>warm list · pre-launch</div>
+      <div class="rung"><b>$197</b>Devon's list</div>
+      <div class="rung"><b>$297</b>public Pro</div>
+</div>
+    <div class="waitrow">
+      <input type="email" placeholder="you@somewhere.com" aria-label="Email" id="waitEmail">
+      <button id="waitBtn">Join</button>
+</div>
+    <div class="draft">Funnel per PLANNING.md (locked with Devon 2026-05-21) · $97/3-month downsell on cold exit · capture not wired.</div>
+</div>
+  <button class="ghost" id="againBtn">Breathe again</button>
+</section>
+
+<!-- CODEX -->
+<section class="screen scrolly" id="codex">
+  <div class="panel">
+    <div class="brand" style="margin-bottom:8px">The Breath Codex</div>
+    <h1 style="font-size:clamp(1.7rem,5vw,2.4rem)">Breath is not a technique.<br>It's an interface.</h1>
+    <p class="lead">Between awareness, pressure and physiology. Three short courses — where breath came from, what it's becoming in Devon's hands, and where the field goes next. Each episode: ~90 seconds, animated, occasionally ridiculous, always true.</p>
+
+    <div class="era">
+      <div class="era-tag" style="color:var(--teal)">Course I · The Past</div>
+      <h2>Old Air — a brief history of breathing on purpose</h2>
+      <p class="blurb">Humans have been breath-hacking for 3,500 years. These are the greatest hits — drawn funny, told straight.</p>
+      <div class="epis">
+        <div class="ep"><div class="en">The OG Breath Nerds</div><div class="ed">Pranayama, Indus Valley, ~1500 BC. The first people to write down that the exhale changes the mind — on palm leaves, no less.</div><div class="em"><b>EP 1</b> · ~90s animated short · in production</div></div>
+        <div class="ep"><div class="en">Monks vs. Wet Sheets</div><div class="ed">Tibetan tummo: monks drying soaked sheets on their backs in freezing air, using breath and inner heat. Documented, repeatedly.</div><div class="em"><b>EP 2</b> · ~90s animated short · in production</div></div>
+        <div class="ep"><div class="en">The Soviet Who Said Breathe LESS</div><div class="ed">Konstantin Buteyko's heresy: most of us over-breathe. Less air, more CO₂ tolerance, calmer system. He was onto something.</div><div class="em"><b>EP 3</b> · ~90s animated short · in production</div></div>
+        <div class="ep"><div class="en">Grandma Was Right</div><div class="ed">"Count to ten and breathe." Every culture's grandmother independently discovered vagal braking. Science caught up centuries later.</div><div class="em"><b>EP 4</b> · ~90s animated short · in production</div></div>
+</div>
+</div>
+
+    <div class="era">
+      <div class="era-tag" style="color:var(--gold)">Course II · The Present</div>
+      <h2>The Black Airbender system</h2>
+      <p class="blurb">Devon isn't teaching box breathing or "calm down" breathing. He teaches breath as an internal pressure system — a driver of movement, awareness and performance. Six phases, one arc:</p>
+      <div class="phases">
+        <span class="ph"><b>1</b> Entry</span><span class="ph"><b>2</b> Pressure</span><span class="ph"><b>3</b> Rhythm</span>
+        <span class="ph"><b>4</b> Movement</span><span class="ph"><b>5</b> Spiral</span><span class="ph"><b>6</b> Stillness</span>
+</div>
+      <div class="tech"><div class="tn">Pressure Exhale</div><div class="tx">Inhale naturally through the nose. Exhale longer, against slight resistance, abdomen gently engaged. <b>Why it works:</b> longer exhales raise CO₂ tolerance — and better CO₂ tolerance means better oxygen delivery (the Bohr effect). The oxygen was never the problem.</div></div>
+      <div class="tech"><div class="tn">Pulse Breathing</div><div class="tx">Smooth intake; exhale in rhythmic pulses. Rhythm over count, awareness over control. <b>Why it works:</b> the nervous system entrains to rhythm — brain-body sync rises, vagal tone rises.</div></div>
+      <div class="tech"><div class="tn">Temple Activation</div><div class="tx">Warm the hands, place on temples, breathe slow with long exhales. <b>Why it works:</b> stimulates trigeminal and vagal pathways — head tension, eye strain and mental fatigue ease off.</div></div>
+      <table class="scitab">
+        <tr><td>CO₂ tolerance</td><td>Longer exhales → higher CO₂ tolerance → better oxygen delivery where it's needed (Bohr effect).</td></tr>
+        <tr><td>Vagus nerve</td><td>Long exhales shift the system parasympathetic — heart rate down, calm and focus up.</td></tr>
+        <tr><td>Fascia &amp; pressure</td><td>Breath creates internal pressure waves; fascia responds to pressure, not just stretch.</td></tr>
+        <tr><td>Vestibular</td><td>Spiral movement + breath = balance, spatial awareness, multi-plane coordination.</td></tr>
+      </table>
+</div>
+
+    <div class="era">
+      <div class="era-tag" style="color:var(--plasma)">Course III · The Future</div>
+      <h2>The Field — where this is heading</h2>
+      <p class="blurb">Devon built the Scalar Plasma Projector for the kitchen counter — and users started documenting what they observed: cut roses holding form for nine days, charged-plate experiments, a mushroom farm signing on. Course III follows the frontier — scalar fields, structured water, sound and frequency practice — as open exploration. Observations and rituals, documented honestly; you draw your own conclusions.</p>
+      <div class="epis">
+        <div class="ep"><div class="en">The Kitchen-Counter Field</div><div class="ed">Why Devon built a plasma projector for the home, in his own words — and what the first users did with it.</div><div class="em"><b>EP 1</b> · ~90s · in production</div></div>
+        <div class="ep"><div class="en">Water With a Memory?</div><div class="ed">The structured-water conversation, told straight: what people describe, what's mechanism, what's still open question.</div><div class="em"><b>EP 2</b> · ~90s · in production</div></div>
+        <div class="ep"><div class="en">Breath Meets Field</div><div class="ed">Where the practice goes next: breathing inside the field — rhythm, sound, and the daily bio-coherence loop.</div><div class="em"><b>EP 3</b> · ~90s · in production</div></div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- TRIBUTE -->
+<section class="screen scrolly" id="tribute">
+  <div class="panel" style="text-align:center">
+    <div class="brand" style="margin-bottom:8px">Tribute</div>
+    <h1 style="font-size:clamp(1.7rem,5vw,2.4rem)">The Lineage</h1>
+    <div class="anchor">
+      <blockquote>"Most people think breathing is about getting oxygen. You already have oxygen. What you're missing is control over pressure. And pressure is what moves blood, stabilises your body, and sharpens your mind. So instead of trying to breathe more… <em>learn how to exhale better.</em>"</blockquote>
+      <cite>Devon · The Black Airbender</cite>
+</div>
+    <ul class="lineage">
+      <li><b>The yogis of the Indus Valley</b>who first wrote the breath down, three and a half thousand years ago</li>
+      <li><b>The tummo keepers of Tibet</b>who proved the body's furnace answers to the exhale</li>
+      <li><b>Konstantin Buteyko</b>who dared to say we breathe too much</li>
+      <li><b>Every grandmother, everywhere</b>who said "count to ten" and was right</li>
+      <li class="devon"><b>Devon — The Black Airbender</b>who took breath out of the technique books and made it pressure, movement and field — and built the projector for the kitchen, so the practice could live where life does</li>
+    </ul>
+    <p style="color:var(--ink-faint);font-size:.8rem;max-width:46ch;margin:26px auto 0;line-height:1.6">ScalarBreath is built in tribute to this lineage — endorsed by Devon, breathed by you.</p>
+</div>
+</section>
+
+<!-- NEARBY -->
+<section class="screen scrolly" id="nearby">
+  <div class="near-wrap" style="text-align:center">
+    <div class="brand">Find your calm</div>
+    <h1 style="font-size:clamp(1.6rem,5vw,2.3rem)">Where's the nearest<br>place to breathe?</h1>
+    <p class="near-hint">Tap once. We'll find the closest parks, woods and water near you — then dress the breath to match where you are. Your location stays on your device.</p>
+    <button class="near-btn" id="nearBtn">Find calm near me</button>
+    <div class="near-status" id="nearStatus" role="status" aria-live="polite"></div>
+    <div class="suggest" id="nearSuggest">
+      <div class="se">Sensed around you</div>
+      <div class="st" id="suggestText"></div>
+      <button id="suggestGo">Breathe here</button>
+    </div>
+    <ul class="nspots" id="nearList"></ul>
+  </div>
+</section>
+
+<div class="safety">ScalarBreath is a relaxation &amp; education experience, not medical care. If you're struggling: Samaritans 116 123 (UK) · 988 (US).</div>
+
+<script>
+(() => {
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- Devon Codex journeys (exhale-led; no box breathing) ---------- */
+  const PATTERNS = {
+    arrive:{rounds:2,cycles:3,phases:[
+      {w:'Breathe in',h:'Nose only — soft and slow',t:4,from:0,to:1},
+      {w:'Let it out',h:'Longer than the in-breath',t:6,from:1,to:0}]},
+    pressure:{rounds:2,cycles:3,phases:[
+      {w:'Breathe in',h:'Natural — through the nose',t:4,from:0,to:1},
+      {w:'Press it out',h:'Slight resistance · abdomen gently engaged',t:10,from:1,to:0}]},
+    pulse:{rounds:2,cycles:3,phases:[
+      {w:'Draw in',h:'One smooth intake',t:4,from:0,to:1},
+      {w:'Pulse it out',h:'Release in soft waves',t:8,from:1,to:0,pulse:true}]},
+    spiral:{rounds:2,cycles:3,phases:[
+      {w:'Be still',h:'Inhale is stillness — receive',t:4,from:0,to:1},
+      {w:'Move',h:'Exhale is motion — turn gently clockwise',t:6,from:1,to:0,spin:true}]},
+    temple:{rounds:2,cycles:3,phases:[
+      {w:'Breathe in',h:'Hands warm on your temples',t:4,from:0,to:1},
+      {w:'Hold soft',h:'Let the warmth sink in',t:4,from:1,to:1,hold:true},
+      {w:'Long release',h:'Slow… let the head empty',t:8,from:1,to:0,temple:true}]},
+    backflow:{rounds:2,cycles:3,phases:[
+      {w:'Draw in',h:'One deep, smooth intake',t:5,from:0,to:1},
+      {w:'Feed it back',h:'Steady exhale · tiny swallows · keep the air moving',t:10,from:1,to:0,inflow:true}]},
+    stillpoint:{rounds:2,cycles:3,phases:[
+      {w:'Breathe in',h:'Fill gently — no strain',t:4,from:0,to:1},
+      {w:'Suspend',h:'Nothing to do. Watch the ring close.',t:7,from:1,to:1,hold:true,freeze:true},
+      {w:'Let it all go',h:'The longest, softest exhale you own',t:8,from:1,to:0}]},
+    craving:{rounds:1,cycles:5,phases:[
+      {w:'Breathe in',h:'The urge is a wave — it has a crest',t:4,from:0,to:1},
+      {w:'Hold',h:'Watch it, don’t feed it',t:2,from:1,to:1,hold:true},
+      {w:'Let it pass',h:'It always passes. Ride it down.',t:8,from:1,to:0}]}
+  };
+
+  const QUESTIONS = [
+    "What's the quietest thing you can hear right now?",
+    "Name one thing your body did for you today without being asked.",
+    "If that last exhale had a colour… what was it?",
+    "What are you carrying that was never yours to carry?",
+    "Shoulder check: earrings, or wings?",
+    "If your exhale could take one thing with it — what goes?",
+    "Where do you reckon the air you just breathed has been?",
+    "One tiny thing you're still looking forward to today?",
+    "What does 'enough' feel like, right now?",
+    "Is your jaw clenched or floating? …now it's floating.",
+    "Who would quietly smile knowing you took this minute?",
+    "The next hour: what's the one thing that actually matters?",
+    "What smell means 'home' to you?",
+    "If stillness had a name, what would you call yours?"
+  ];
+  let qDeck=[];
+
+  /* ---------- audio: drone + SHIMMER release (no beeps) ---------- */
+  let AC=null,drone=null,droneGain=null,soundOn=true;
+  function audioInit(){
+    if(AC) return;
+    AC=new (window.AudioContext||window.webkitAudioContext)();
+    drone=AC.createOscillator();drone.type='sine';
+    const d2=AC.createOscillator();d2.type='sine';
+    droneGain=AC.createGain();droneGain.gain.value=0;
+    const g2=AC.createGain();g2.gain.value=.35;
+    drone.frequency.value=110;d2.frequency.value=165.8;
+    drone.connect(droneGain);d2.connect(g2);g2.connect(droneGain);
+    droneGain.connect(AC.destination);drone.start();d2.start();
+  }
+  function droneTo(level,freq,secs){
+    if(!AC||!soundOn)return;const t=AC.currentTime;
+    const tuned=freq*(ORBS[orbKey].tune||1);      // the orb sets the key
+    droneGain.gain.cancelScheduledValues(t);droneGain.gain.setTargetAtTime(level,t,secs/3);
+    drone.frequency.cancelScheduledValues(t);drone.frequency.setTargetAtTime(tuned,t,secs/2.5);
+  }
+  // soft inhale cue — one warm partial, barely there
+  function inCue(){
+    if(!AC||!soundOn)return;
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.type='triangle';o.frequency.value=261.6; // warm C4
+    g.gain.setValueAtTime(0,AC.currentTime);
+    g.gain.linearRampToValueAtTime(.05,AC.currentTime+.4);
+    g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+2);
+    o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+2.1);
+  }
+  // SHIMMER — the release moment: a cascade of high partials + filtered air
+  function shimmer(strength=1){
+    if(!AC||!soundOn)return;
+    const t0=AC.currentTime;
+    for(let i=0;i<7;i++){
+      const o=AC.createOscillator(),g=AC.createGain();
+      o.type='sine';
+      const V=ORBS[orbKey];                        // the orb tints the shimmer register
+      o.frequency.value=V.shLo+Math.random()*(V.shHi-V.shLo);
+      const st=t0+Math.random()*.5, amp=(.012+Math.random()*.02)*strength;
+      g.gain.setValueAtTime(0,st);
+      g.gain.linearRampToValueAtTime(amp,st+.08);
+      g.gain.exponentialRampToValueAtTime(.0001,st+1.8+Math.random());
+      o.connect(g);g.connect(AC.destination);o.start(st);o.stop(st+3);
+    }
+    // breath of air: filtered noise wash
+    const len=AC.sampleRate*2, buf=AC.createBuffer(1,len,AC.sampleRate), ch=buf.getChannelData(0);
+    for(let i=0;i<len;i++) ch[i]=(Math.random()*2-1)*(1-i/len);
+    const src=AC.createBufferSource();src.buffer=buf;
+    const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=2400;f.Q.value=.8;
+    const g=AC.createGain();g.gain.value=.05*strength;
+    src.connect(f);f.connect(g);g.connect(AC.destination);src.start(t0);
+  }
+  function pulseTick(f=880,amp=.035){
+    if(!AC||!soundOn)return;
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.type='sine';o.frequency.value=f;
+    g.gain.setValueAtTime(0,AC.currentTime);
+    g.gain.linearRampToValueAtTime(amp,AC.currentTime+.015);
+    g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+.35);
+    o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+.4);
+  }
+  // HOLD — a suspended glassy chord, barely beating, for the whole hold
+  function holdPad(dur){
+    if(!AC||!soundOn)return;const t=AC.currentTime;
+    [659.3,663.5,987.8].forEach((f,i)=>{
+      const o=AC.createOscillator(),g=AC.createGain();
+      o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(0,t);
+      g.gain.linearRampToValueAtTime(i===2?.008:.016,t+.8);
+      g.gain.setValueAtTime(i===2?.008:.016,t+dur-.6);
+      g.gain.linearRampToValueAtTime(.0001,t+dur);
+      o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+dur+.1);
+    });
+  }
+  // TEMPLE — deep warm wash on the long release (lowpassed air, no chime)
+  function templeWash(dur){
+    if(!AC||!soundOn)return;const t=AC.currentTime;
+    const len=AC.sampleRate*dur,buf=AC.createBuffer(1,len,AC.sampleRate),ch=buf.getChannelData(0);
+    for(let i=0;i<len;i++)ch[i]=(Math.random()*2-1)*(1-i/len);
+    const src=AC.createBufferSource();src.buffer=buf;
+    const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(700,t);
+    f.frequency.exponentialRampToValueAtTime(180,t+dur);
+    const g=AC.createGain();g.gain.value=.09;
+    src.connect(f);f.connect(g);g.connect(AC.destination);src.start(t);
+  }
+  // BACKFLOW — vibrato tremble on the drone = the internal vibration (auto-stops)
+  function vibrato(dur){
+    if(!AC||!soundOn)return;const t=AC.currentTime;
+    const lfo=AC.createOscillator(),depth=AC.createGain();
+    lfo.type='sine';lfo.frequency.value=5.5;depth.gain.value=7;
+    lfo.connect(depth);depth.connect(drone.frequency);
+    lfo.start(t);lfo.stop(t+dur);
+  }
+  function silence(){if(AC)droneTo(0,110,1.2);}
+
+  /* ---------- orb variants (Devon canon: scalar-wave / plasma-vortex / sacred-ember / aurora) ---------- */
+  // Each orb has a VOICE: tune shifts the drone's key, shLo/shHi tint the shimmer register
+  const ORBS={
+    scalar:{ core:['rgba(242,236,255,.85)','rgba(180,140,255,.75)','rgba(109,60,220,.55)','rgba(50,20,110,.12)'],
+      fieldA:'139,92,246',fieldB:'45,212,191',corona:'228,184,92',wisp:['139,92,246','45,212,191','228,184,92'],
+      spin:1,rise:0,ribbon:false, tune:1,shLo:1200,shHi:3800},
+    vortex:{ core:['rgba(236,255,252,.85)','rgba(120,225,210,.7)','rgba(90,80,230,.55)','rgba(20,40,110,.12)'],
+      fieldA:'45,212,191',fieldB:'139,92,246',corona:'45,212,191',wisp:['45,212,191','139,92,246','45,212,191'],
+      spin:3.2,rise:0,ribbon:false, tune:1.12,shLo:1500,shHi:4200},
+    ember:{ core:['rgba(255,240,214,.9)','rgba(255,180,90,.75)','rgba(230,90,30,.5)','rgba(110,35,10,.12)'],
+      fieldA:'249,115,22',fieldB:'228,184,92',corona:'228,184,92',wisp:['249,115,22','228,184,92','255,210,140'],
+      spin:.6,rise:1,ribbon:false, tune:.85,shLo:700,shHi:2200},
+    aurora:{ core:['rgba(230,255,250,.8)','rgba(110,230,205,.6)','rgba(100,110,235,.5)','rgba(15,60,55,.12)'],
+      fieldA:'45,212,191',fieldB:'139,92,246',corona:'160,255,230',wisp:['45,212,191','120,160,255','170,255,220'],
+      spin:.8,rise:0,ribbon:true, tune:1.22,shLo:1800,shHi:4600},
+    /* --- Environment orbs: outdoor palettes, same canvas engine (Breath Atlas → real voices) --- */
+    water:{ core:['rgba(224,250,255,.86)','rgba(143,230,239,.72)','rgba(31,127,158,.5)','rgba(8,50,66,.12)'],
+      fieldA:'84,189,210',fieldB:'31,127,158',corona:'174,240,250',wisp:['143,230,239','84,189,210','200,245,255'],
+      spin:1.2,rise:0,ribbon:false, tune:1.05,shLo:1300,shHi:3600},
+    forest:{ core:['rgba(236,255,225,.86)','rgba(182,228,147,.7)','rgba(44,107,61,.5)','rgba(10,40,20,.12)'],
+      fieldA:'79,154,92',fieldB:'44,107,61',corona:'196,236,150',wisp:['182,228,147','79,154,92','120,200,120'],
+      spin:.5,rise:0,ribbon:false, tune:.95,shLo:900,shHi:2600},
+    coast:{ core:['rgba(232,255,250,.86)','rgba(157,238,224,.7)','rgba(31,156,148,.5)','rgba(6,55,50,.12)'],
+      fieldA:'95,211,198',fieldB:'31,156,148',corona:'200,246,235',wisp:['157,238,224','95,211,198','255,225,170'],
+      spin:.9,rise:0,ribbon:false, tune:1.10,shLo:1400,shHi:3800},
+    meadow:{ core:['rgba(245,255,220,.88)','rgba(220,242,154,.72)','rgba(111,180,63,.5)','rgba(30,50,10,.12)'],
+      fieldA:'167,217,106',fieldB:'111,180,63',corona:'220,242,154',wisp:['220,242,154','167,217,106','150,200,90'],
+      spin:.7,rise:1,ribbon:false, tune:1.0,shLo:1100,shHi:3000},
+    ridge:{ core:['rgba(255,240,214,.9)','rgba(255,200,132,.75)','rgba(216,90,127,.5)','rgba(80,20,40,.12)'],
+      fieldA:'255,158,124',fieldB:'216,90,127',corona:'255,210,150',wisp:['255,200,132','216,90,127','255,170,140'],
+      spin:.6,rise:0,ribbon:true, tune:.9,shLo:800,shHi:2400}
+  };
+  let orbKey='scalar';
+
+  const cv=document.getElementById('field'),ctx=cv.getContext('2d');
+  let W,H,DPR;
+  function size(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+    cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+  addEventListener('resize',size);size();
+
+  const WISPS=Array.from({length:reduced?0:28},(_,i)=>({
+    a:Math.random()*Math.PI*2,r:.28+Math.random()*.45,s:(.0018+Math.random()*.0035)*(i%2?1:-1),
+    sz:1+Math.random()*2.4,h:i%3,y:Math.random()}));
+
+  // the orb's living surface — radius varies around the rim; wob = chaos, sag = melt gravity
+  function blobPath(cx,cy,R,wob,sag,ts,rot,scale){
+    ctx.beginPath();
+    const N=52;
+    for(let i=0;i<=N;i++){
+      const th=i/N*Math.PI*2;
+      let r=R*scale*(1+wob*(Math.sin(3*th+ts*.0011+rot)*.38+Math.sin(5*th-ts*.0009+rot*.6)*.26+Math.sin(2*th+ts*.0007)*.36));
+      if(sag>0){const dn=Math.sin(th); r*=1+(dn>0? dn*dn*sag*.5 : -dn*sag*.10);} // bottom bulges, top thins — the melt
+      const x=cx+Math.cos(th)*r, y=cy+Math.sin(th)*r*.98;
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+    }
+    ctx.closePath();
+  }
+
+  let breathVal=0,mode='idle',spinBoost=0,pulseMod=0;
+  // per-phase FX state, set by runPhase, consumed by draw()
+  const FX={hold:false,freeze:false,temple:false,inflow:false,prog:0,kind:'still'};
+  // reading pages (codex/tribute) cross-fade the orb out for a quiet star sky
+  let pageAmt=0,pageTarget=0;
+  const STARS=Array.from({length:70},()=>({x:Math.random(),y:Math.random(),s:.5+Math.random()*1.6,p:Math.random()*7}));
+  // organic form: the orb reforms on inhale, melts on exhale, dissolves at the end
+  let formP=1,dissP=0;
+  const DRIPS=[];
+  const FORM_LINES=['Nothing to force — the shape finds itself.','Let the field settle around you.','Arrive. The rest is breath.','Take your seat. The orb is gathering.'];
+  const DISSOLVE_LINES=['The form lets go. You keep the calm.','Shape is temporary. Breath remains.','It melts — you stay.','Given back to the field.'];
+  const ease=x=>x<0?0:x>1?1:x*x*(3-2*x);
+
+  function draw(ts){
+    ctx.clearRect(0,0,W,H);
+    pageAmt+=(pageTarget-pageAmt)*.05;
+    if(pageAmt>.01){                                // the reading sky
+      ctx.globalAlpha=pageAmt;
+      let ng=ctx.createLinearGradient(0,0,0,H*.55);
+      ng.addColorStop(0,'rgba(139,92,246,.15)');ng.addColorStop(.6,'rgba(45,212,191,.045)');ng.addColorStop(1,'rgba(7,3,16,0)');
+      ctx.fillStyle=ng;ctx.fillRect(0,0,W,H*.55);
+      for(const s of STARS){
+        const tw=.35+.65*Math.abs(Math.sin(ts*.0006+s.p));
+        ctx.beginPath();ctx.arc(s.x*W,s.y*H,s.s,0,7);
+        ctx.fillStyle='rgba(242,236,255,'+(.5*tw)+')';ctx.fill();
+      }
+      ctx.globalAlpha=1;
+    }
+    if(pageAmt>=.99){requestAnimationFrame(draw);return;}
+    ctx.globalAlpha=1-pageAmt;
+    const O=ORBS[orbKey];
+    const onHome=mode==='idle'&&pageTarget===0;
+    const cx=W/2;
+    let cy=H/2-(mode==='breathe'?H*.02:H*.05);
+    let base=Math.min(W,H)*.165;
+    if(onHome){cy=H*0.155;base=Math.min(W,H)*.085;}   // home: faint halo high behind the headline — swatches are the previews
+    const idle=mode==='breathe'?0:Math.sin(ts*.0006)*.06+.06;
+    const b=ease(breathVal)+idle+pulseMod;
+    const R=base*(1+b*.85);
+
+    let g=ctx.createRadialGradient(cx,cy,R*.1,cx,cy,R*3.1);
+    g.addColorStop(0,'rgba('+O.fieldA+','+((0.20+b*.14)*(onHome?.35:1))+')');
+    g.addColorStop(.45,'rgba('+O.fieldB+','+((0.05+b*.05)*(onHome?.35:1))+')');
+    g.addColorStop(1,'rgba(7,3,16,0)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+    // aurora ribbons
+    if(O.ribbon&&!reduced){
+      for(let rb=0;rb<3;rb++){
+        ctx.beginPath();
+        for(let x=0;x<=W;x+=14){
+          const y=cy-R*1.5-rb*26+Math.sin(x*.006+ts*.0009+rb*2)*(16+b*22);
+          x?ctx.lineTo(x,y):ctx.moveTo(x,y);
+        }
+        ctx.strokeStyle='rgba('+O.wisp[rb]+','+(0.10+b*.12)+')';
+        ctx.lineWidth=10-rb*2.5;ctx.stroke();
+      }
+    }
+
+    // BACKFLOW: rings converging into the orb — the field feeding back
+    if(FX.inflow&&!reduced){
+      for(let i=0;i<3;i++){
+        const k=1-((ts*.00035+i/3)%1);           // 1 → 0, forever converging
+        const rr=R*(1.05+k*1.9);
+        ctx.beginPath();ctx.arc(cx,cy,rr,0,7);
+        ctx.strokeStyle='rgba('+O.fieldB+','+((1-k)*.22)+')';
+        ctx.lineWidth=1.5;ctx.stroke();
+      }
+    }
+    // TEMPLE: two warm glows at the orb's temples, drawn inward by the exhale
+    if(FX.temple){
+      const off=R*(1.9-FX.prog*1.35);
+      for(const s of[-1,1]){
+        const gx=cx+s*off;
+        const tg=ctx.createRadialGradient(gx,cy,2,gx,cy,R*.55);
+        tg.addColorStop(0,'rgba(228,184,92,'+(0.30-FX.prog*.1)+')');
+        tg.addColorStop(1,'rgba(228,184,92,0)');
+        ctx.fillStyle=tg;ctx.fillRect(gx-R*.6,cy-R*.6,R*1.2,R*1.2);
+      }
+    }
+    const spin=(O.spin+spinBoost);
+    for(const w of WISPS){
+      if(!FX.freeze) w.a+=w.s*spin*(1+b*.8);       // Stillpoint: time stops
+      if(O.rise&&!FX.freeze){w.y-=.0012*(1+b);if(w.y<0)w.y=1;}
+      const pull=FX.inflow?(1-FX.prog*.72):1;      // Backflow: wisps drawn into the orb
+      const wr=R*(1.15+w.r*pull)*(1+dissP*1.6);    // dissolve: they carry the light away
+      const x=cx+Math.cos(w.a)*wr;
+      const y=(O.rise? H*(0.15+w.y*.75) : cy+Math.sin(w.a)*wr*.82);
+      const tw=FX.freeze?(0.5+0.5*Math.sin(ts*.008+w.a*7)):1;  // frozen stars twinkle
+      ctx.beginPath();ctx.arc(x,y,w.sz*(0.7+b*.6),0,7);
+      ctx.fillStyle='rgba('+O.wisp[w.h]+','+((0.35+b*.3)*tw)+')';
+      ctx.shadowColor='rgba('+O.wisp[w.h]+',.9)';ctx.shadowBlur=12;
+      ctx.fill();ctx.shadowBlur=0;
+    }
+    // HOLD: a gold ring slowly closes around the orb — the wordless countdown
+    if(FX.hold){
+      ctx.beginPath();ctx.arc(cx,cy,R*1.18,-Math.PI/2,-Math.PI/2+FX.prog*Math.PI*2);
+      ctx.strokeStyle='rgba(228,184,92,.75)';ctx.lineWidth=2.5;ctx.lineCap='round';
+      ctx.shadowColor='rgba(228,184,92,.9)';ctx.shadowBlur=16;
+      ctx.stroke();ctx.shadowBlur=0;
+    }
+
+    // ---- deform / melt / reform ----
+    if(mode==='form')formP=Math.min(1,formP+.011);
+    if(mode==='dissolve')dissP=Math.min(1,dissP+.016);
+    let wob=.045,sag=0;
+    if(mode==='breathe'){
+      if(FX.kind==='in')       wob=.13-FX.prog*.115;             // inhale: chaos coheres into form
+      else if(FX.kind==='out'){wob=.03+FX.prog*.13;sag=FX.prog*.6;} // exhale: the form melts
+      else if(FX.kind==='hold')wob=.018+Math.sin(ts*.02)*.008;   // hold: taut surface, faint ripple
+    }
+    if(mode==='form')    wob+=(1-formP)*.5;                      // arrival: assembling from scatter
+    if(mode==='dissolve'){wob+=dissP*.55;sag+=dissP*.35;}        // the end: given back to the field
+    if(reduced){wob=Math.min(wob,.03);sag*=.3;}
+    const rotS=O.spin>2?ts*.0016:0;                              // vortex smears rotationally
+
+    // drips — light sheds off the melting rim
+    if(sag>.12&&!reduced&&Math.random()<(O.rise?.30:.16))
+      DRIPS.push({x:cx+(Math.random()-.5)*R*.9,y:cy+R*(1+sag*.28),vy:.4+Math.random()*.8,r:1.4+Math.random()*2.4,a:.7});
+    for(let i=DRIPS.length-1;i>=0;i--){const d=DRIPS[i];
+      d.y+=d.vy;d.vy+=.05;d.a-=.012;
+      if(d.a<=0||d.y>H){DRIPS.splice(i,1);continue;}
+      ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,7);
+      ctx.fillStyle='rgba('+O.corona+','+d.a+')';
+      ctx.shadowColor='rgba('+O.corona+',.9)';ctx.shadowBlur=10;
+      ctx.fill();ctx.shadowBlur=0;}
+
+    const orbA=(mode==='form'?(.25+.75*formP):1)*(1-dissP*.92)*(onHome?.5:1);
+    ctx.globalAlpha=(1-pageAmt)*orbA;
+    g=ctx.createRadialGradient(cx-R*.25,cy-R*.3,R*.05,cx,cy,R);
+    O.core.forEach((c,i)=>g.addColorStop([0,.25,.62,1][i],c));
+    blobPath(cx,cy,R,wob,sag,ts,rotS,1);
+    ctx.fillStyle=g;ctx.shadowColor='rgba('+O.fieldA+',.85)';ctx.shadowBlur=60+b*70;
+    ctx.fill();ctx.shadowBlur=0;
+
+    blobPath(cx,cy,R,wob*.85,sag*.8,ts,rotS,1.06);
+    ctx.strokeStyle='rgba('+O.corona+','+(0.14+b*.3)+')';
+    ctx.lineWidth=1.5+b*1.5;
+    ctx.shadowColor='rgba('+O.corona+',.8)';ctx.shadowBlur=18+b*22;
+    ctx.stroke();ctx.shadowBlur=0;
+    ctx.globalAlpha=1-pageAmt;
+
+    ctx.globalAlpha=1;
+    spinBoost*=.985; pulseMod*=.9;
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+
+  /* ---------- engine ---------- */
+  const $=id=>document.getElementById(id);
+  const screens={home:$('home'),breathe:$('breathe'),interlude:$('interlude'),complete:$('complete'),codex:$('codex'),tribute:$('tribute'),nearby:$('nearby')};
+  function show(name){
+    pageTarget=(name==='codex'||name==='tribute'||name==='nearby')?1:0;
+    for(const k in screens)screens[k].classList.toggle('on',k===name);
+    $('endBtn').style.display=(name==='breathe'||name==='interlude')?'':'none';
+    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',
+      t.dataset.t===name||(t.dataset.t==='home'&&['breathe','interlude','complete'].includes(name))));
+  }
+
+  let session=null,raf=null,pulseTimer=null,formTimer=null;
+  const JNAMES={arrive:'Arrive',pressure:'Pressure Exhale',pulse:'Pulse',spiral:'Spiral',temple:'Temple',backflow:'Backflow',stillpoint:'Stillpoint',craving:'The Craving Wave'};
+  function startSession(key){
+    audioInit();if(AC.state==='suspended')AC.resume();
+    if(key==='spiral'&&orbKey==='scalar')setOrb('vortex'); // spiral journey pairs with the vortex by default
+    if(key==='craving')setOrb('ember');                    // the Craving Wave IS Sacred Ember (locked w/ Devon 2026-05-21)
+    session={p:PATTERNS[key],key,taps:[],round:0,cycle:0,phase:0,breaths:0,started:Date.now()};
+    buildDots();show('breathe');
+    // arrival is part of the practice: the orb assembles from scatter before the first instruction
+    mode='form';formP=0;breathVal=.25;
+    $('phaseWord').style.opacity=1;$('phaseHint').style.opacity=1;
+    $('phaseWord').textContent=JNAMES[key]||'';
+    $('phaseHint').textContent=FORM_LINES[Math.floor(Math.random()*FORM_LINES.length)];
+    droneTo(.04,118,2.5);
+    clearTimeout(formTimer);
+    formTimer=setTimeout(()=>{mode='breathe';runPhase();},3000);
+  }
+  function buildDots(){const el=$('cycleDots');el.innerHTML='';
+    for(let i=0;i<session.p.cycles;i++){const d=document.createElement('span');d.className='dot';el.appendChild(d);}}
+  function markDots(){[...$('cycleDots').children].forEach((d,i)=>{
+    d.className='dot'+(i<session.cycle?' done':i===session.cycle?' now':'');});}
+
+  function runPhase(){
+    const ph=session.p.phases[session.phase];
+    FX.kind=ph.to>ph.from?'in':ph.to<ph.from?'out':ph.hold?'hold':'still';
+    const pw=$('phaseWord'),phh=$('phaseHint');
+    pw.style.opacity=0;phh.style.opacity=0;   // words breathe too — crossfade, never jump-cut
+    setTimeout(()=>{pw.textContent=ph.w;phh.textContent=ph.h||'';pw.style.opacity=1;phh.style.opacity=1;},280);
+    markDots();
+    clearInterval(pulseTimer);
+    FX.hold=!!ph.hold;FX.freeze=!!ph.freeze;FX.temple=!!ph.temple;FX.inflow=!!ph.inflow;FX.prog=0;
+    if(ph.to>ph.from){droneTo(.06,146,ph.t);inCue();}
+    else if(ph.to<ph.from){
+      droneTo(ph.temple?.035:.03,ph.temple?82:98,ph.t);
+      shimmer(ph.temple?.5:1);                     // the release IS the shimmer (temple: softer, warmer)
+      if(ph.temple)templeWash(ph.t);               // deep warm air instead of sparkle-forward
+      if(ph.spin)spinBoost=4;                      // spiral: field whirls on exhale
+      if(ph.inflow){vibrato(ph.t);                 // backflow: drone trembles like the throat
+        pulseTimer=setInterval(()=>{pulseMod=.05;pulseTick(392,.025);},1100);}
+      if(ph.pulse){pulseTimer=setInterval(()=>{pulseMod=.08;pulseTick();},900);}
+    } else if(ph.hold){droneTo(.05,130,ph.t);holdPad(ph.t);}  // suspension chord
+    else droneTo(.045,123,ph.t);
+    const start=performance.now(),dur=ph.t*1000;
+    cancelAnimationFrame(raf);
+    (function tween(now){
+      const k=Math.min((now-start)/dur,1);
+      FX.prog=k;
+      breathVal=ph.from+(ph.to-ph.from)*(reduced?Math.round(k):k);
+      if(k<1)raf=requestAnimationFrame(tween);else advance();
+    })(start);
+  }
+  function advance(){
+    clearInterval(pulseTimer);
+    const{p}=session;session.phase++;
+    if(session.phase>=p.phases.length){
+      session.phase=0;session.cycle++;session.breaths++;
+      if(session.cycle>=p.cycles){
+        session.cycle=0;session.round++;
+        if(session.round>=p.rounds)return complete();
+        return interlude();
+      }
+    }
+    runPhase();
+  }
+  function interlude(){
+    mode='interlude';silence();shimmer(.6);fxReset();
+    if(!qDeck.length)qDeck=[...QUESTIONS].sort(()=>Math.random()-.5);
+    $('interludeQ').textContent=qDeck.pop();show('interlude');
+    session.tapShown=performance.now();          // how long the question sits with you = yours alone
+  }
+  screens.interlude.addEventListener('click',()=>{if(mode!=='interlude')return;
+    session.taps.push(performance.now()-(session.tapShown||performance.now()));
+    mode='breathe';show('breathe');runPhase();});
+
+  // ---- breath fingerprint: the session, drawn — seeded by YOUR exact rhythm ----
+  function renderFingerprint(){
+    const c=$('fpCanvas'),f=c.getContext('2d');
+    const S=c.width,ctr=S/2;
+    f.clearRect(0,0,S,S);
+    f.fillStyle='#0A0616';f.fillRect(0,0,S,S);
+    const O=ORBS[orbKey];
+    const durs=session.p.phases.map(p=>p.t),tot=durs.reduce((a,b)=>a+b,0);
+    const petals=Math.max(5,durs.length*session.p.cycles);
+    const seed=(session.started%997)/997;
+    const taps=(session.taps.length?session.taps:[900+seed*800]).map(t=>(t%1700)/1700);
+    const cols=[O.fieldA,O.fieldB,O.corona];
+    const layers=session.p.rounds*2+2;
+    for(let L=0;L<layers;L++){
+      const base=S*.15+L*(S*.29/layers);
+      const a1=.24+(durs[L%durs.length]/tot)*.62;         // phase lengths shape the petals (boldened)
+      const a2=.12+taps[L%taps.length]*.30;               // your pauses warp the weave
+      const ph1=seed*6.28+L*1.7,ph2=taps[(L+1)%taps.length]*6.28;
+      f.beginPath();
+      for(let i=0;i<=240;i++){
+        const th=i/240*Math.PI*2;
+        const r=base*(1+a1*Math.sin(petals*th+ph1)+a2*Math.sin((petals*.5+1)*th*2+ph2)*Math.sin(th*3));
+        const px=ctr+Math.cos(th)*r,py=ctr+Math.sin(th)*r;
+        i?f.lineTo(px,py):f.moveTo(px,py);
+      }
+      f.closePath();
+      const col=cols[L%3];
+      f.strokeStyle='rgba('+col+','+(0.75-L*(.35/layers))+')';
+      f.lineWidth=1.9;
+      f.shadowColor='rgba('+col+',.9)';f.shadowBlur=14;
+      f.stroke();f.shadowBlur=0;
+    }
+    const cg=f.createRadialGradient(ctr,ctr,2,ctr,ctr,S*.10);
+    cg.addColorStop(0,'rgba(242,236,255,.9)');cg.addColorStop(1,'rgba('+O.fieldA+',0)');
+    f.beginPath();f.arc(ctr,ctr,S*.10,0,7);f.fillStyle=cg;f.fill();
+    for(let i=0;i<session.breaths;i++){                   // one gold tick per completed exhale
+      const th=-Math.PI/2+i/session.breaths*Math.PI*2,rr=S*.465;
+      f.beginPath();f.arc(ctr+Math.cos(th)*rr,ctr+Math.sin(th)*rr,3,0,7);
+      f.fillStyle='rgba('+O.corona+',.85)';f.fill();
+    }
+    try{$('fpSave').href=c.toDataURL('image/png');}catch(e){}
+    $('fpCaption').textContent='Journey: '+(JNAMES[session.key]||'—')+' · '+session.breaths+
+      ' exhales · drawn from your exact rhythm — the pauses were yours, so the pattern is too.';
+  }
+  function complete(){
+    // the orb gives its form back to the field — the release, made visible — THEN the numbers
+    mode='dissolve';silence();shimmer(1.4);setTimeout(()=>shimmer(.8),700);fxReset();
+    $('phaseWord').textContent='';
+    $('phaseHint').textContent=DISSOLVE_LINES[Math.floor(Math.random()*DISSOLVE_LINES.length)];
+    dissP=.001;
+    clearTimeout(formTimer);
+    formTimer=setTimeout(()=>{
+      $('statBreaths').textContent=session.breaths;
+      $('statMins').textContent=Math.max(1,Math.round((Date.now()-session.started)/60000));
+      renderFingerprint();                        // the melt leaves a mark
+      breathVal=0;dissP=0;formP=1;mode='complete';show('complete');
+    },2400);
+  }
+
+  /* ---------- wires ---------- */
+  function setOrb(k){orbKey=k;
+    document.querySelectorAll('#orbrow .orbchip').forEach(c=>c.classList.toggle('on',c.dataset.o===k));}
+  document.querySelectorAll('#orbrow .orbchip').forEach(c=>c.addEventListener('click',()=>setOrb(c.dataset.o)));
+  function setGround(g){
+    if(g==='night')delete document.documentElement.dataset.ground; else document.documentElement.dataset.ground=g;
+    document.querySelectorAll('#groundrow .orbchip').forEach(c=>c.classList.toggle('on',c.dataset.g===g));}
+  document.querySelectorAll('#groundrow .orbchip').forEach(c=>c.addEventListener('click',()=>setGround(c.dataset.g)));
+  document.querySelectorAll('.journey').forEach(b=>b.addEventListener('click',()=>startSession(b.dataset.p)));
+  function fxReset(){FX.hold=FX.freeze=FX.temple=FX.inflow=false;FX.prog=0;FX.kind='still';}
+  function teardown(){mode='idle';silence();clearInterval(pulseTimer);clearTimeout(formTimer);
+    cancelAnimationFrame(raf);breathVal=0;dissP=0;formP=1;DRIPS.length=0;fxReset();}
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+    if(mode==='breathe'||mode==='interlude'||mode==='form'||mode==='dissolve')teardown();
+    show(t.dataset.t);}));
+  $('endBtn').addEventListener('click',()=>{teardown();show('home');});
+  $('againBtn').addEventListener('click',()=>{mode='idle';show('home');});
+  $('soundBtn').addEventListener('click',e=>{soundOn=!soundOn;
+    e.target.textContent=soundOn?'Sound':'Muted';e.target.setAttribute('aria-pressed',soundOn);
+    if(!soundOn)silence();});
+  $('waitBtn').addEventListener('click',()=>{
+    const v=$('waitEmail').value.trim();
+    $('waitBtn').textContent=v?'Saved':'Email?';
+    setTimeout(()=>$('waitBtn').textContent='Join',1600);});
+
+  /* ---------- Nearby: find-a-calm-place + auto-theme bridge ---------- */
+  const OVERPASS=["https://overpass-api.de/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter","https://overpass.kumi.systems/api/interpreter"];
+  const NKINDS=[
+    {q:'["leisure"="park"]',ico:'Park',env:'meadow'},
+    {q:'["leisure"="nature_reserve"]',ico:'Nature reserve',env:'forest'},
+    {q:'["leisure"="garden"]',ico:'Garden',env:'meadow'},
+    {q:'["landuse"="forest"]',ico:'Woodland',env:'forest'},
+    {q:'["natural"="wood"]',ico:'Woodland',env:'forest'},
+    {q:'["natural"="water"]',ico:'Waterside',env:'water'},
+    {q:'["water"="lake"]',ico:'Lakeside',env:'water'},
+    {q:'["natural"="beach"]',ico:'Beach',env:'coast'}
+  ];
+  const ENV2ORB={meadow:'meadow',forest:'forest',water:'water',coast:'coast'};
+  function hav(a,b,c,d){const R=6371e3,r=Math.PI/180,dLa=(c-a)*r,dLo=(d-b)*r;
+    const s=Math.sin(dLa/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(s));}
+  const wmin=m=>Math.max(1,Math.round(m/1.35/60));
+  function nq(lat,lon,rad){return "[out:json][timeout:25];("+NKINDS.map(k=>`way${k.q}(around:${rad},${lat},${lon});node${k.q}(around:${rad},${lat},${lon});`).join("")+");out center tags;";}
+  function nkind(t){for(const k of NKINDS){const[key,val]=k.q.replace(/[\[\]"]/g,"").split("=");if(t[key]===val)return k;}return{ico:'Green space',env:'meadow'};}
+  async function nfetch(query){const body="data="+encodeURIComponent(query);let e;
+    for(const u of OVERPASS){try{const r=await fetch(u,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});if(!r.ok){e=r.status;continue;}return await r.json();}catch(x){e=x;}}throw e;}
+  async function nearGet(lat,lon,rad){const d=await nfetch(nq(lat,lon,rad));const seen=new Set(),out=[];
+    for(const el of d.elements||[]){const t=el.tags||{};if(t.access==="private"||t.access==="no")continue;if(!t.name)continue;
+      const p=el.center||{lat:el.lat,lon:el.lon};if(p.lat==null)continue;const key=t.name.toLowerCase();if(seen.has(key))continue;seen.add(key);
+      out.push({name:t.name,dist:hav(lat,lon,p.lat,p.lon),kind:nkind(t)});}
+    out.forEach(s=>s.mins=wmin(s.dist));return out.sort((a,b)=>a.dist-b.dist).slice(0,6);}
+  const nBtn=$('nearBtn'),nStat=$('nearStatus'),nList=$('nearList'),nSug=$('nearSuggest');
+  let suggestOrb='forest',suggestGround='warmgrey';
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  function nfind(){
+    if(!navigator.geolocation){nStat.textContent="This device can't share location.";return;}
+    nBtn.disabled=true;nBtn.textContent="Finding…";nStat.textContent="Getting your bearings…";
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      const{latitude:lat,longitude:lon}=pos.coords;nStat.textContent="Looking for green nearby…";
+      try{let s=await nearGet(lat,lon,1500);if(s.length<3)s=await nearGet(lat,lon,4000);nrender(s);}
+      catch(e){nStat.textContent="Couldn't reach the map — try again in a moment.";}
+      finally{nBtn.disabled=false;nBtn.textContent="Find calm near me";}
+    },err=>{nBtn.disabled=false;nBtn.textContent="Find calm near me";
+      nStat.textContent=err.code===1?"Allow location to find calm near you.":"Couldn't get your location.";},
+      {enableHighAccuracy:false,timeout:12000,maximumAge:60000});
+  }
+  function nrender(spots){
+    nList.innerHTML="";
+    if(!spots.length){nStat.textContent="No named green spots in easy reach — the horizon's always there.";nSug.style.display="none";return;}
+    const tally={};spots.slice(0,4).forEach(s=>tally[s.kind.env]=(tally[s.kind.env]||0)+1);
+    const domEnv=Object.keys(tally).sort((a,b)=>tally[b]-tally[a])[0]||'meadow';
+    suggestOrb=ENV2ORB[domEnv]||'meadow';
+    const hr=new Date().getHours();
+    suggestGround = hr>=7&&hr<17 ? 'warmgrey' : hr<20 ? 'dusk' : 'night';
+    const top=spots[0], gname={warmgrey:'Warm Grey',dusk:'Dusk',night:'Night'}[suggestGround];
+    const oname={water:'Lakeside',forest:'Woodland',coast:'Coast',meadow:'Meadow'}[suggestOrb];
+    nStat.textContent=`${spots.length} calm spot${spots.length>1?'s':''} near you.`;
+    $('suggestText').textContent=`You're near ${top.kind.ico.toLowerCase()} — try the ${oname} orb on a ${gname} sky.`;
+    nSug.style.display="block";
+    spots.forEach(s=>{const li=document.createElement('li');li.className='nspot';
+      li.innerHTML=`<div class="nn"><b>${esc(s.name)}</b><span>${s.kind.ico}</span></div><div class="nw">${s.mins}<small>min walk</small></div>`;
+      nList.appendChild(li);});
+  }
+  nBtn.addEventListener('click',nfind);
+  $('suggestGo').addEventListener('click',()=>{setOrb(suggestOrb);setGround(suggestGround);show('home');window.scrollTo({top:0,behavior:'smooth'});});
+})();
+</script>
