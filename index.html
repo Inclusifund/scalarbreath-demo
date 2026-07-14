@@ -1,5 +1,4 @@
 <meta charset="utf-8">
-<meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ScalarBreath — The Exhale Engine</title>
 <style>
@@ -251,8 +250,15 @@
   .chips button{background:var(--card);border:1px solid var(--line);color:var(--ink-soft);border-radius:100px;
     padding:8px 17px;font:inherit;font-weight:700;cursor:pointer;font-variant-numeric:tabular-nums}
   .chips button.on{border-color:var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent)}
-  .journey.craft{border-style:dashed;text-align:center}
+  .journey.craft{text-align:center;border:1.5px solid var(--gold);
+    background:color-mix(in srgb, var(--gold) 14%, var(--card));
+    box-shadow:0 0 0 1px var(--line-gold), 0 8px 26px -10px var(--gold)}
+  .journey.craft:hover,.journey.craft:focus-visible{border-color:var(--gold);
+    background:color-mix(in srgb, var(--gold) 20%, var(--card));transform:translateY(-2px)}
   .journey.craft .jn{color:var(--gold)}
+  .journey.craft .jm{color:var(--gold)}
+  .craftpill{color:var(--gold)!important;border-color:var(--line-gold)!important;background:color-mix(in srgb, var(--gold) 16%, transparent)}
+  @media (min-width:700px){.journey.craft{grid-column:1 / -1}}
   #builder{justify-content:flex-start;overflow-y:auto;padding-top:80px}
   .bwrap{width:min(460px,92vw);display:flex;flex-direction:column;align-items:center;text-align:center;padding-bottom:60px}
   .ratio{font-family:var(--serif);font-size:2.4rem;letter-spacing:.1em;color:var(--ink);margin:6px 0 4px;font-variant-numeric:tabular-nums}
@@ -349,6 +355,7 @@
       </div>
     </div>
   <div class="journeys">
+    <button class="journey craft" id="craftCard"><span class="jn">Craft your own<span class="jnew craftpill">Start here</span></span><div class="jd">Set your own inhale, hold, exhale and empty-hold. Play with the ratio — it's your breath.</div><div class="jm">Custom · your numbers</div></button>
     <button class="journey" data-p="arrive"><span class="jn">Arrive</span><div class="jd">Break the unconscious pattern. Nose only — slow in, longer out.</div><div class="jm">Entry · in 4 / out 6 · ~3 min</div></button>
     <button class="journey" data-p="pressure"><span class="jn">Pressure Exhale</span><div class="jd">The flagship. Natural inhale, then a long exhale against gentle resistance — the exhale drives everything.</div><div class="jm">Pressure · in 4 / out 10 · ~4 min</div></button>
     <button class="journey" data-p="pulse"><span class="jn">Pulse</span><div class="jd">Rhythm over count. Smooth inhale, exhale released in soft pulses — feel the field flicker with you.</div><div class="jm">Rhythm · in 4 / pulse out 8 · ~4 min</div></button>
@@ -357,7 +364,6 @@
     <button class="journey" data-p="backflow"><span class="jn">Backflow<span class="jnew">New</span></span><div class="jd">The ingestion breath. One deep intake, then a long steady exhale with tiny swallows — and the field flows back into you.</div><div class="jm">Vibration · in 5 / out 10 · ~4 min</div></button>
     <button class="journey" data-p="stillpoint"><span class="jn">Stillpoint<span class="jnew">New</span></span><div class="jd">Fill, then suspend — time stops, the stars freeze, a gold ring closes. When it seals, give away the longest exhale you own.</div><div class="jm">Stillness · in 4 / hold 7 / out 8 · ~4 min</div></button>
     <button class="journey" data-p="craving"><span class="jn">The Craving Wave<span class="jnew">New</span></span><div class="jd">When the urge hits — anything you're trying not to reach for. Urges crest and pass like waves; the Ember rides this one down with you. About a minute.</div><div class="jm">Sacred Ember · in 4 / hold 2 / out 8 · ~70 sec</div></button>
-    <button class="journey craft" id="craftCard"><span class="jn">Craft your own</span><div class="jd">Set your own inhale, hold, exhale and empty-hold. Play with the ratio — it's your breath.</div><div class="jm">Custom · your numbers</div></button>
   </div>
     <button class="ghost" id="backToSetup" style="margin-top:18px">Back to setup</button>
   </div>
