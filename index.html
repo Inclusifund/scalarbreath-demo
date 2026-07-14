@@ -272,6 +272,15 @@
   .stp button:active{transform:scale(.94)}
   .stp b{font-family:var(--serif);font-size:1.3rem;min-width:1.7ch;font-variant-numeric:tabular-nums;color:var(--gold)}
   .stp small{color:var(--ink-faint);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase}
+  /* custom exhale-feel toggles: pulse + spiral */
+  .feels{display:flex;gap:10px;width:100%;margin:2px 0 20px;justify-content:center}
+  .feeltog{flex:1;max-width:200px;display:flex;flex-direction:column;align-items:center;gap:3px;
+    background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 10px;cursor:pointer;
+    color:var(--ink-soft);font:inherit;transition:border-color .25s,background .25s,color .25s}
+  .feeltog b{font-family:var(--serif);font-weight:400;font-size:1rem}
+  .feeltog small{font-size:.6rem;letter-spacing:.08em;color:var(--ink-faint);text-transform:uppercase}
+  .feeltog.on{border-color:var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent)}
+  .feeltog.on small{color:var(--gold)}
 
   /* ---- Nearby (find-a-calm-place) ---- */
   #nearby{justify-content:flex-start;overflow-y:auto;padding-top:76px}
@@ -381,6 +390,10 @@
       <div class="stp"><span>Hold full</span><button data-k="hold" data-d="-1">–</button><b id="v-hold">2</b><button data-k="hold" data-d="1">+</button><small>sec</small></div>
       <div class="stp"><span>Exhale</span><button data-k="out" data-d="-1">–</button><b id="v-out">8</b><button data-k="out" data-d="1">+</button><small>sec</small></div>
       <div class="stp"><span>Hold empty</span><button data-k="hold2" data-d="-1">–</button><b id="v-hold2">0</b><button data-k="hold2" data-d="1">+</button><small>sec</small></div>
+    </div>
+    <div class="feels">
+      <button class="feeltog" id="togPulse" type="button" aria-pressed="false"><b>🌀 Pulse</b><small>exhale in soft waves</small></button>
+      <button class="feeltog" id="togSpiral" type="button" aria-pressed="false"><b>✷ Spiral</b><small>turn as you release</small></button>
     </div>
     <button class="cta" id="builderBegin">Begin</button>
     <button class="ghost" id="builderBack" style="margin-top:14px">Back</button>
@@ -1059,6 +1072,7 @@
     document.querySelectorAll('#breathChips button').forEach(x=>x.classList.toggle('on',x===b));}));
   // custom ratio builder
   const custom={in:4,hold:2,out:8,hold2:0};
+  const feels={pulse:false,spiral:false};  // exhale-feel toggles — kept OUT of `custom` so refreshBuilder's v-* loop stays clean
   const LIM={in:[2,12],hold:[0,15],out:[2,15],hold2:[0,10]};
   function guideText(c){
     let g;
@@ -1078,10 +1092,17 @@
     custom[k]=Math.max(lim[0],Math.min(lim[1],custom[k]+d));refreshBuilder();}));
   $('craftCard').addEventListener('click',()=>{refreshBuilder();show('builder');});
   $('builderBack').addEventListener('click',()=>show('journeys'));
+  function toggleFeel(key,el){feels[key]=!feels[key];el.classList.toggle('on',feels[key]);el.setAttribute('aria-pressed',feels[key]);}
+  $('togPulse').addEventListener('click',()=>toggleFeel('pulse',$('togPulse')));
+  $('togSpiral').addEventListener('click',()=>toggleFeel('spiral',$('togSpiral')));
   $('builderBegin').addEventListener('click',()=>{
     const ph=[{w:'Breathe in',h:'Fill gently — no strain',t:custom.in,from:0,to:1}];
     if(custom.hold>0)ph.push({w:'Hold',h:'Stay full, soft',t:custom.hold,from:1,to:1,hold:true});
-    ph.push({w:'Breathe out',h:'Slow, complete release',t:custom.out,from:1,to:0});
+    // exhale phase carries the feel toggles — engine reads ph.pulse (soft-wave audio/visual) + ph.spin (field whirl)
+    const outPh={w:'Breathe out',h:'Slow, complete release',t:custom.out,from:1,to:0};
+    if(feels.pulse){outPh.pulse=true;outPh.w='Pulse it out';outPh.h='Release in soft waves';}
+    if(feels.spiral){outPh.spin=true;outPh.h=feels.pulse?'Release in soft waves — turn gently as you go':'Exhale is motion — turn gently as you release';}
+    ph.push(outPh);
     if(custom.hold2>0)ph.push({w:'Hold empty',h:'Rest in the pause',t:custom.hold2,from:0,to:0,hold:true});
     startSession('custom',{phases:ph});});
   document.querySelectorAll('.journey[data-p]').forEach(b=>b.addEventListener('click',()=>startSession(b.dataset.p)));
